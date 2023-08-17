@@ -33,7 +33,10 @@ export default class Repl extends IronfishCommand {
     const { flags } = await this.parse(Repl)
 
     const node = await this.sdk.node()
-    const client = new RpcMemoryClient(this.logger, node.rpc.getRouter(ALL_API_NAMESPACES))
+    const client = new RpcMemoryClient(
+      this.logger,
+      node.rpc.getRouter(ALL_API_NAMESPACES),
+    )
 
     if (flags.opendb) {
       await NodeUtils.waitForOpen(node)

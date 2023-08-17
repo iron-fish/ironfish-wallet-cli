@@ -175,7 +175,10 @@ export class Burn extends IronfishCommand {
       this.exit(0)
     }
 
-    if (!flags.confirm && !(await this.confirm(assetId, amount, raw.fee, account))) {
+    if (
+      !flags.confirm &&
+      !(await this.confirm(assetId, amount, raw.fee, account))
+    ) {
       this.error('Transaction aborted.')
     }
 
@@ -193,12 +196,18 @@ export class Burn extends IronfishCommand {
 
     if (response.content.accepted === false) {
       this.warn(
-        `Transaction '${transaction.hash().toString('hex')}' was not accepted into the mempool`,
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' was not accepted into the mempool`,
       )
     }
 
     if (response.content.broadcasted === false) {
-      this.warn(`Transaction '${transaction.hash().toString('hex')}' failed to broadcast`)
+      this.warn(
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' failed to broadcast`,
+      )
     }
 
     const assetResponse = await client.wallet.getAsset({
@@ -206,7 +215,9 @@ export class Burn extends IronfishCommand {
       id: assetId,
       confirmations: flags.confirmations,
     })
-    const assetName = BufferUtils.toHuman(Buffer.from(assetResponse.content.name, 'hex'))
+    const assetName = BufferUtils.toHuman(
+      Buffer.from(assetResponse.content.name, 'hex'),
+    )
 
     this.log(`Burned asset ${assetName} from ${account}`)
     this.log(`Asset Identifier: ${assetId}`)

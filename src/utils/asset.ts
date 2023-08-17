@@ -3,7 +3,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { Asset } from '@ironfish/rust-nodejs'
-import { BufferUtils, CurrencyUtils, RpcClient, StringUtils } from '@ironfish/sdk'
+import {
+  BufferUtils,
+  CurrencyUtils,
+  RpcClient,
+  StringUtils,
+} from '@ironfish/sdk'
 import { AssetVerification } from '@ironfish/sdk'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
@@ -15,7 +20,10 @@ type RenderAssetNameOptions = {
   logWarn?: (msg: string) => void
 }
 
-export function renderAssetName(name: string, options?: RenderAssetNameOptions): string {
+export function renderAssetName(
+  name: string,
+  options?: RenderAssetNameOptions,
+): string {
   if (options?.outputType) {
     // User requested some machine-readable output (like CSV, JSON, or YAML).
     // Do not alter the name in any way.
@@ -94,7 +102,9 @@ export async function selectAsset(
   let balances = balancesResponse.content.balances
 
   if (!options.showNativeAsset) {
-    balances = balances.filter((b) => b.assetId !== Asset.nativeId().toString('hex'))
+    balances = balances.filter(
+      (b) => b.assetId !== Asset.nativeId().toString('hex'),
+    )
   }
 
   if (!options.showNonCreatorAsset) {
@@ -102,7 +112,9 @@ export async function selectAsset(
       account: account,
     })
 
-    balances = balances.filter((b) => b.assetCreator === accountResponse.content.publicKey)
+    balances = balances.filter(
+      (b) => b.assetCreator === accountResponse.content.publicKey,
+    )
   }
 
   if (balances.length === 0) {

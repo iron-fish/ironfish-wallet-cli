@@ -65,12 +65,13 @@ function renderStatus(content: GetWorkersStatusResponse): string {
 
   let status = `\n${'JOB'.padEnd(20, ' ')} | QUEUE | EXECUTE | ERROR | DONE \n`
   for (const job of content.jobs) {
-    status += `${job.name.padEnd(20, ' ')} | ${String(job.queue).padStart(5, ' ')} | ${String(
-      job.execute,
-    ).padStart(7, ' ')} | ${String(job.error).padStart(5, ' ')} | ${String(job.complete).padEnd(
-      6,
+    status += `${job.name.padEnd(20, ' ')} | ${String(job.queue).padStart(
+      5,
       ' ',
-    )}\n`
+    )} | ${String(job.execute).padStart(7, ' ')} | ${String(job.error).padStart(
+      5,
+      ' ',
+    )} | ${String(job.complete).padEnd(6, ' ')}\n`
   }
 
   return `Workers: ${workersStatus}\n${status}`

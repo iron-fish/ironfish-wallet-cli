@@ -9,7 +9,6 @@ import {
   InternalOptions,
   IronfishSdk,
   Logger,
-  RpcClient,
   RpcConnectionError,
 } from '@ironfish/sdk'
 import { Command, Config } from '@oclif/core'
@@ -112,7 +111,7 @@ export abstract class IronfishCommand extends Command {
   async init(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     const commandClass = this.constructor as any
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const { flags } = await this.parse(commandClass)
 
     // Get the flags from the flag object which is unknown
@@ -123,12 +122,18 @@ export abstract class IronfishCommand extends Command {
     const internalOverrides: Partial<InternalOptions> = {}
 
     const rpcConnectIpcFlag = getFlag(flags, RpcUseIpcFlagKey)
-    if (typeof rpcConnectIpcFlag === 'boolean' && rpcConnectIpcFlag !== RpcUseIpcFlag.default) {
+    if (
+      typeof rpcConnectIpcFlag === 'boolean' &&
+      rpcConnectIpcFlag !== RpcUseIpcFlag.default
+    ) {
       configOverrides.enableRpcIpc = rpcConnectIpcFlag
     }
 
     const rpcConnectTcpFlag = getFlag(flags, RpcUseTcpFlagKey)
-    if (typeof rpcConnectTcpFlag === 'boolean' && rpcConnectTcpFlag !== RpcUseTcpFlag.default) {
+    if (
+      typeof rpcConnectTcpFlag === 'boolean' &&
+      rpcConnectTcpFlag !== RpcUseTcpFlag.default
+    ) {
       configOverrides.enableRpcTcp = rpcConnectTcpFlag
     }
 
@@ -161,12 +166,18 @@ export abstract class IronfishCommand extends Command {
     }
 
     const rpcTcpTlsFlag = getFlag(flags, RpcTcpTlsFlagKey)
-    if (typeof rpcTcpTlsFlag === 'boolean' && rpcTcpTlsFlag !== RpcTcpTlsFlag.default) {
+    if (
+      typeof rpcTcpTlsFlag === 'boolean' &&
+      rpcTcpTlsFlag !== RpcTcpTlsFlag.default
+    ) {
       configOverrides.enableRpcTls = rpcTcpTlsFlag
     }
 
     const verboseFlag = getFlag(flags, VerboseFlagKey)
-    if (typeof verboseFlag === 'boolean' && verboseFlag !== VerboseFlag.default) {
+    if (
+      typeof verboseFlag === 'boolean' &&
+      verboseFlag !== VerboseFlag.default
+    ) {
       configOverrides.logLevel = '*:verbose'
     }
 
@@ -224,9 +235,4 @@ function getFlag(flags: unknown, flag: FLAGS): unknown | null {
     ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
       (flags as any)[flag]
     : null
-}
-
-export abstract class IronfishRpcCommand extends IronfishCommand {
-  abstract start(): void
-  abstract client(): Promise<Partial<RpcClient>>
 }

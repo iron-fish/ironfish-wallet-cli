@@ -8,7 +8,11 @@ export interface ProgressBar {
   progress: VoidFunction
   getTotal(): number
   setTotal(totalValue: number): void
-  start(totalValue?: number, startValue?: number, payload?: Record<string, unknown>): void
+  start(
+    totalValue?: number,
+    startValue?: number,
+    payload?: Record<string, unknown>,
+  ): void
   stop: VoidFunction
   update(currentValue?: number, payload?: Record<string, unknown>): void
   update(payload?: Record<string, unknown>): void
@@ -16,6 +20,9 @@ export interface ProgressBar {
   increment(payload?: Record<string, unknown>): void
 }
 
-export type CommandFlags<T> = T extends Interfaces.Input<infer TFlags, infer GFlags>
+export type CommandFlags<T> = T extends Interfaces.Input<
+  infer TFlags,
+  infer GFlags
+>
   ? Interfaces.ParserOutput<TFlags, GFlags>['flags']
   : never

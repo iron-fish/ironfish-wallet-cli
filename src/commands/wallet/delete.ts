@@ -38,11 +38,17 @@ export class DeleteCommand extends IronfishCommand {
     const client = await this.sdk.connectRpc()
 
     CliUx.ux.action.start(`Deleting account '${account}'`)
-    const response = await client.wallet.removeAccount({ account, confirm, wait })
+    const response = await client.wallet.removeAccount({
+      account,
+      confirm,
+      wait,
+    })
     CliUx.ux.action.stop()
 
     if (response.content.needsConfirm) {
-      const value = await CliUx.ux.prompt(`Are you sure? Type ${account} to confirm`)
+      const value = await CliUx.ux.prompt(
+        `Are you sure? Type ${account} to confirm`,
+      )
 
       if (value !== account) {
         this.log(`Aborting: ${value} did not match ${account}`)

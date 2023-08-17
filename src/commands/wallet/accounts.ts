@@ -21,7 +21,9 @@ export class AccountsCommand extends IronfishCommand {
 
     const client = await this.sdk.connectRpc()
 
-    const response = await client.wallet.getAccounts({ displayName: flags.displayName })
+    const response = await client.wallet.getAccounts({
+      displayName: flags.displayName,
+    })
 
     if (response.content.accounts.length === 0) {
       this.log('you have no accounts')

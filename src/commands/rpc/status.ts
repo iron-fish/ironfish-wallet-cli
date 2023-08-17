@@ -65,10 +65,18 @@ function renderStatus(content: GetRpcStatusResponse): string {
     result += `Clients:          ${adapter.clients}\n`
     result += `Requests Pending: ${adapter.pending.length}\n`
     result += `Routes Pending:   ${adapter.pending.join(', ')}\n`
-    result += `Inbound Traffic:  ${FileUtils.formatMemorySize(adapter.inbound)}/s\n`
-    result += `Outbound Traffic: ${FileUtils.formatMemorySize(adapter.outbound)}/s\n`
-    result += `Outbound Total:   ${FileUtils.formatMemorySize(adapter.writtenBytes)}\n`
-    result += `Inbound Total:    ${FileUtils.formatMemorySize(adapter.readBytes)}\n`
+    result += `Inbound Traffic:  ${FileUtils.formatMemorySize(
+      adapter.inbound,
+    )}/s\n`
+    result += `Outbound Traffic: ${FileUtils.formatMemorySize(
+      adapter.outbound,
+    )}/s\n`
+    result += `Outbound Total:   ${FileUtils.formatMemorySize(
+      adapter.writtenBytes,
+    )}\n`
+    result += `Inbound Total:    ${FileUtils.formatMemorySize(
+      adapter.readBytes,
+    )}\n`
     result += `RW Backlog:       ${FileUtils.formatMemorySize(
       adapter.readableBytes,
     )} / ${FileUtils.formatMemorySize(adapter.writableBytes)}`

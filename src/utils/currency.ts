@@ -63,7 +63,9 @@ export async function promptCurrency(options: {
     Assert.isNotNull(amount)
 
     if (options.minimum != null && amount < options.minimum) {
-      options.logger.error(`Error: Minimum is ${CurrencyUtils.renderIron(options.minimum)}`)
+      options.logger.error(
+        `Error: Minimum is ${CurrencyUtils.renderIron(options.minimum)}`,
+      )
       continue
     }
 

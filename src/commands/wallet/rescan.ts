@@ -17,7 +17,8 @@ export class RescanCommand extends IronfishCommand {
     follow: Flags.boolean({
       char: 'f',
       default: true,
-      description: 'Follow the rescan live, or attach to an already running rescan',
+      description:
+        'Follow the rescan live, or attach to an already running rescan',
       allowNo: true,
     }),
     local: Flags.boolean({
@@ -49,7 +50,8 @@ export class RescanCommand extends IronfishCommand {
     const speed = new Meter()
 
     const progress = CliUx.ux.progress({
-      format: 'Scanning Blocks: [{bar}] {value}/{total} {percentage}% {speed}/sec | {estimate}',
+      format:
+        'Scanning Blocks: [{bar}] {value}/{total} {percentage}% {speed}/sec | {estimate}',
     }) as ProgressBar
 
     let started = false
@@ -71,7 +73,11 @@ export class RescanCommand extends IronfishCommand {
         progress.increment(completed)
 
         progress.update({
-          estimate: TimeUtils.renderEstimate(sequence, endSequence, speed.rate1m),
+          estimate: TimeUtils.renderEstimate(
+            sequence,
+            endSequence,
+            speed.rate1m,
+          ),
           speed: speed.rate1s.toFixed(0),
         })
       }

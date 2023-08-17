@@ -5,7 +5,9 @@
 import supportsHyperlinks from 'supports-hyperlinks'
 
 export function linkText(url: string, text: string, stdout = true): string {
-  const supported = stdout ? supportsHyperlinks.stdout : supportsHyperlinks.stderr
+  const supported = stdout
+    ? supportsHyperlinks.stdout
+    : supportsHyperlinks.stderr
 
   if (!supported) {
     return url

@@ -4,7 +4,10 @@
 import { Assert, Config } from '@ironfish/sdk'
 import { spawn } from 'child_process'
 
-export function launchEditor(file: string, config?: Config): Promise<number | null> {
+export function launchEditor(
+  file: string,
+  config?: Config,
+): Promise<number | null> {
   let editor = process.env.EDITOR
 
   if (!editor && config) {

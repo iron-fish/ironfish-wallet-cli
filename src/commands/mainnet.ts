@@ -72,7 +72,10 @@ export default class Mainnet extends IronfishCommand {
     }
 
     // Reset the telemetry config to allow people to re-opt in
-    if (this.sdk.config.isSet('enableTelemetry') && this.sdk.config.get('enableTelemetry')) {
+    if (
+      this.sdk.config.isSet('enableTelemetry') &&
+      this.sdk.config.get('enableTelemetry')
+    ) {
       this.sdk.config.clear('enableTelemetry')
       await this.sdk.config.save()
     }

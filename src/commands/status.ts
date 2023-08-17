@@ -79,7 +79,10 @@ export default class Status extends IronfishCommand {
   }
 }
 
-function renderStatus(content: GetNodeStatusResponse, debugOutput: boolean): string {
+function renderStatus(
+  content: GetNodeStatusResponse,
+  debugOutput: boolean,
+): string {
   const nodeStatus = `${content.node.status.toUpperCase()}`
   let blockSyncerStatus = content.blockSyncer.status.toString().toUpperCase()
   const blockSyncerStatusDetails: string[] = []
@@ -96,7 +99,9 @@ function renderStatus(content: GetNodeStatusResponse, debugOutput: boolean): str
   }
 
   if (avgTimeToAddBlock) {
-    blockSyncerStatusDetails.push(`${(1000 / avgTimeToAddBlock).toFixed(2)} blocks added/sec`)
+    blockSyncerStatusDetails.push(
+      `${(1000 / avgTimeToAddBlock).toFixed(2)} blocks added/sec`,
+    )
   }
 
   if (!content.blockchain.synced) {
@@ -116,21 +121,22 @@ function renderStatus(content: GetNodeStatusResponse, debugOutput: boolean): str
   const blockGraffiti = `${content.miningDirector.blockGraffiti}`
 
   const network =
-    defaultNetworkName(content.node.networkId) || content.node.networkId.toString()
+    defaultNetworkName(content.node.networkId) ||
+    content.node.networkId.toString()
 
   const peerNetworkStatus = `${
     content.peerNetwork.isReady ? 'CONNECTED' : 'WAITING'
   } - In: ${FileUtils.formatFileSize(
     content.peerNetwork.inboundTraffic,
-  )}/s, Out: ${FileUtils.formatFileSize(content.peerNetwork.outboundTraffic)}/s, peers ${
-    content.peerNetwork.peers
-  }`
+  )}/s, Out: ${FileUtils.formatFileSize(
+    content.peerNetwork.outboundTraffic,
+  )}/s, peers ${content.peerNetwork.peers}`
 
   const blockchainStatus = `${content.blockchain.head.hash} (${
     content.blockchain.head.sequence
-  }), Since HEAD: ${TimeUtils.renderSpan(Date.now() - content.blockchain.headTimestamp)} (${
-    content.blockchain.synced ? 'SYNCED' : 'NOT SYNCED'
-  })`
+  }), Since HEAD: ${TimeUtils.renderSpan(
+    Date.now() - content.blockchain.headTimestamp,
+  )} (${content.blockchain.synced ? 'SYNCED' : 'NOT SYNCED'})`
 
   let miningDirectorStatus = `${content.miningDirector.status.toUpperCase()} - ${
     content.miningDirector.miners
@@ -143,11 +149,15 @@ function renderStatus(content: GetNodeStatusResponse, debugOutput: boolean): str
       content.blockchain.newBlockSpeed,
     )}, empty template: ${TimeUtils.renderSpan(
       content.miningDirector.newEmptyBlockTemplateSpeed,
-    )}, full template: ${TimeUtils.renderSpan(content.miningDirector.newBlockTemplateSpeed)}`
+    )}, full template: ${TimeUtils.renderSpan(
+      content.miningDirector.newBlockTemplateSpeed,
+    )}`
   }
 
   const memPoolStorage = FileUtils.formatMemorySize(content.memPool.sizeBytes)
-  const memPoolMaxStorage = FileUtils.formatMemorySize(content.memPool.maxSizeBytes)
+  const memPoolMaxStorage = FileUtils.formatMemorySize(
+    content.memPool.maxSizeBytes,
+  )
   const memPoolSaturationPercentage = (
     (content.memPool.sizeBytes / content.memPool.maxSizeBytes) *
     100

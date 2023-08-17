@@ -38,6 +38,8 @@ export class TransactionAddCommand extends IronfishCommand {
     })
     CliUx.ux.action.stop()
 
-    this.log(`Transaction added for accounts: ${response.content.accounts.join(', ')}`)
+    this.log(
+      `Transaction added for accounts: ${response.content.accounts.join(', ')}`,
+    )
   }
 }

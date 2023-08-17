@@ -61,7 +61,9 @@ export async function watchTransaction(options: {
     currentStatus = response?.content.transaction?.status ?? 'not found'
 
     if (prevStatus !== 'not found' && currentStatus === 'not found') {
-      CliUx.ux.action.stop(`Transaction ${options.hash} deleted while watching it.`)
+      CliUx.ux.action.stop(
+        `Transaction ${options.hash} deleted while watching it.`,
+      )
       break
     }
 

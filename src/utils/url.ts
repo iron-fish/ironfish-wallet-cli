@@ -8,7 +8,11 @@ const tryParseUrl = (url: string): URL | null => {
   try {
     return new URL(url)
   } catch (e) {
-    if (e instanceof TypeError && ErrorUtils.isNodeError(e) && e.code === 'ERR_INVALID_URL') {
+    if (
+      e instanceof TypeError &&
+      ErrorUtils.isNodeError(e) &&
+      e.code === 'ERR_INVALID_URL'
+    ) {
       return null
     }
     throw e

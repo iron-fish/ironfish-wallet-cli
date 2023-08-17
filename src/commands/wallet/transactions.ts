@@ -36,7 +36,8 @@ export class TransactionsCommand extends IronfishCommand {
       description: 'Number of latest transactions to skip',
     }),
     confirmations: Flags.integer({
-      description: 'Number of block confirmations needed to confirm a transaction',
+      description:
+        'Number of block confirmations needed to confirm a transaction',
     }),
     notes: Flags.boolean({
       default: false,
@@ -106,13 +107,17 @@ export class TransactionsCommand extends IronfishCommand {
       d.assetId === nativeAssetId ? -1 : 1,
     )
 
-    const feePaid = transaction.type === TransactionType.SEND ? BigInt(transaction.fee) : 0n
+    const feePaid =
+      transaction.type === TransactionType.SEND ? BigInt(transaction.fee) : 0n
 
     const transactionRows = []
 
     let assetCount = assetBalanceDeltas.length
 
-    for (const [index, { assetId, assetName, delta }] of assetBalanceDeltas.entries()) {
+    for (const [
+      index,
+      { assetId, assetName, delta },
+    ] of assetBalanceDeltas.entries()) {
       let amount = BigInt(delta)
 
       if (assetId === Asset.nativeId().toString('hex')) {
@@ -162,11 +167,14 @@ export class TransactionsCommand extends IronfishCommand {
 
     const nativeAssetId = Asset.nativeId().toString('hex')
 
-    const notes = transaction.notes.sort((n) => (n.assetId === nativeAssetId ? -1 : 1))
+    const notes = transaction.notes.sort((n) =>
+      n.assetId === nativeAssetId ? -1 : 1,
+    )
 
     const noteCount = transaction.notes.length
 
-    const feePaid = transaction.type === TransactionType.SEND ? BigInt(transaction.fee) : 0n
+    const feePaid =
+      transaction.type === TransactionType.SEND ? BigInt(transaction.fee) : 0n
 
     for (const [index, note] of notes.entries()) {
       const amount = BigInt(note.value)
@@ -254,7 +262,9 @@ export class TransactionsCommand extends IronfishCommand {
       feePaid: {
         header: 'Fee Paid ($IRON)',
         get: (row) =>
-          row.feePaid && row.feePaid !== 0n ? CurrencyUtils.renderIron(row.feePaid) : '',
+          row.feePaid && row.feePaid !== 0n
+            ? CurrencyUtils.renderIron(row.feePaid)
+            : '',
       },
       ...TableCols.asset({ extended, format }),
       amount: {
@@ -292,7 +302,11 @@ export class TransactionsCommand extends IronfishCommand {
     return columns
   }
 
-  getRowGroup(index: number, assetCount: number, assetRowCount: number): string {
+  getRowGroup(
+    index: number,
+    assetCount: number,
+    assetRowCount: number,
+  ): string {
     if (assetCount > 1) {
       if (assetRowCount === 0) {
         return '┏'

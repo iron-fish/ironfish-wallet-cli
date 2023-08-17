@@ -102,7 +102,10 @@ async function getTxWithFee(
   })
 
   const response = await promise.catch((e) => {
-    if (e instanceof RpcRequestError && e.code === ERROR_CODES.INSUFFICIENT_BALANCE) {
+    if (
+      e instanceof RpcRequestError &&
+      e.code === ERROR_CODES.INSUFFICIENT_BALANCE
+    ) {
       return null
     } else {
       throw e
@@ -127,7 +130,9 @@ function getChoiceFromTx(
   value: RawTransaction | null
 } {
   return {
-    name: `${name} ${transaction ? CurrencyUtils.renderIron(transaction.fee) : ''}`,
+    name: `${name} ${
+      transaction ? CurrencyUtils.renderIron(transaction.fee) : ''
+    }`,
     disabled: transaction ? false : 'Not enough $IRON',
     value: transaction,
   }

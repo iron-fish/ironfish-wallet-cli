@@ -88,7 +88,10 @@ export class ExportCommand extends IronfishCommand {
         const stats = await fs.promises.stat(resolved)
 
         if (stats.isDirectory()) {
-          resolved = this.sdk.fileSystem.join(resolved, `ironfish-${account}.txt`)
+          resolved = this.sdk.fileSystem.join(
+            resolved,
+            `ironfish-${account}.txt`,
+          )
         }
 
         if (fs.existsSync(resolved)) {

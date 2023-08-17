@@ -8,7 +8,12 @@ import os from 'os'
 import path from 'path'
 import { promisify } from 'util'
 import { IronfishCommand } from '../../command'
-import { ConfigFlag, ConfigFlagKey, DataDirFlag, DataDirFlagKey } from '../../flags'
+import {
+  ConfigFlag,
+  ConfigFlagKey,
+  DataDirFlag,
+  DataDirFlagKey,
+} from '../../flags'
 import { launchEditor } from '../../utils'
 
 const mkdtempAsync = promisify(mkdtemp)

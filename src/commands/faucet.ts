@@ -17,7 +17,8 @@ export class FaucetCommand extends IronfishCommand {
     ...RemoteFlags,
     force: Flags.boolean({
       default: false,
-      description: 'Force the faucet to try to give you coins even if its disabled',
+      description:
+        'Force the faucet to try to give you coins even if its disabled',
     }),
     email: Flags.string({
       hidden: true,
@@ -29,14 +30,19 @@ export class FaucetCommand extends IronfishCommand {
     const { flags } = await this.parse(FaucetCommand)
 
     if (FAUCET_DISABLED && !flags.force) {
-      this.log(`❌ The faucet is currently disabled. Check ${DEFAULT_DISCORD_INVITE} ❌`)
+      this.log(
+        `❌ The faucet is currently disabled. Check ${DEFAULT_DISCORD_INVITE} ❌`,
+      )
       this.exit(1)
     }
 
     const client = await this.sdk.connectRpc()
     const networkInfoResponse = await client.chain.getNetworkInfo()
 
-    if (networkInfoResponse.content === null || networkInfoResponse.content.networkId !== 0) {
+    if (
+      networkInfoResponse.content === null ||
+      networkInfoResponse.content.networkId !== 0
+    ) {
       // not testnet
       this.log(`The faucet is only available for testnet.`)
       this.exit(1)
@@ -47,9 +53,12 @@ export class FaucetCommand extends IronfishCommand {
 
     if (!email) {
       email =
-        (await CliUx.ux.prompt('Enter your email to stay updated with Iron Fish', {
-          required: false,
-        })) || undefined
+        (await CliUx.ux.prompt(
+          'Enter your email to stay updated with Iron Fish',
+          {
+            required: false,
+          },
+        )) || undefined
     }
 
     // Create an account if one is not set
@@ -57,11 +66,16 @@ export class FaucetCommand extends IronfishCommand {
     let accountName = response.content.account?.name
 
     if (!accountName) {
-      this.log(`You don't have a default account set up yet. Let's create one first!`)
+      this.log(
+        `You don't have a default account set up yet. Let's create one first!`,
+      )
       accountName =
-        (await CliUx.ux.prompt('Please enter the name of your new Iron Fish account', {
-          required: false,
-        })) || 'default'
+        (await CliUx.ux.prompt(
+          'Please enter the name of your new Iron Fish account',
+          {
+            required: false,
+          },
+        )) || 'default'
 
       await client.wallet.createAccount({ name: accountName, default: true })
     }

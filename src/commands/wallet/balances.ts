@@ -43,7 +43,9 @@ export class BalancesCommand extends IronfishCommand {
     })
     this.log(`Account: ${response.content.account}`)
 
-    let columns: CliUx.Table.table.Columns<GetBalancesResponse['balances'][number]> = {
+    let columns: CliUx.Table.table.Columns<
+      GetBalancesResponse['balances'][number]
+    > = {
       assetName: {
         header: 'Asset Name',
         get: (row) =>

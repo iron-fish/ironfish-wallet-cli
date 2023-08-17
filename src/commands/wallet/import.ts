@@ -29,7 +29,8 @@ export class ImportCommand extends IronfishCommand {
       name: 'blob',
       parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
       required: false,
-      description: 'The copy-pasted output of wallet:export; or, a raw spending key',
+      description:
+        'The copy-pasted output of wallet:export; or, a raw spending key',
     },
   ]
 
@@ -61,9 +62,12 @@ export class ImportCommand extends IronfishCommand {
       this.log()
       this.log(`Found existing account with name '${flags.name}'`)
 
-      const name = await CliUx.ux.prompt('Enter a different name for the account', {
-        required: true,
-      })
+      const name = await CliUx.ux.prompt(
+        'Enter a different name for the account',
+        {
+          required: true,
+        },
+      )
       if (name === flags.name) {
         this.error(`Entered the same name: '${name}'`)
       }
@@ -83,7 +87,9 @@ export class ImportCommand extends IronfishCommand {
     if (isDefaultAccount) {
       this.log(`The default account is now: ${name}`)
     } else {
-      this.log(`Run "ironfish wallet:use ${name}" to set the account as default`)
+      this.log(
+        `Run "ironfish wallet:use ${name}" to set the account as default`,
+      )
     }
   }
 

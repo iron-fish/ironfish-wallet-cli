@@ -111,14 +111,22 @@ const remoteFlags: Record<string, CompletableOptionFlag> = {}
 remoteFlags[VerboseFlagKey] = VerboseFlag as unknown as CompletableOptionFlag
 remoteFlags[ConfigFlagKey] = ConfigFlag as unknown as CompletableOptionFlag
 remoteFlags[DataDirFlagKey] = DataDirFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseTcpFlagKey] = RpcUseTcpFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseIpcFlagKey] = RpcUseIpcFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpHostFlagKey] = RpcTcpHostFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpPortFlagKey] = RpcTcpPortFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcHttpHostFlagKey] = RpcHttpHostFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcHttpPortFlagKey] = RpcHttpPortFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseHttpFlagKey] = RpcUseHttpFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpTlsFlagKey] = RpcTcpTlsFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcUseTcpFlagKey] =
+  RpcUseTcpFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcUseIpcFlagKey] =
+  RpcUseIpcFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcTcpHostFlagKey] =
+  RpcTcpHostFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcTcpPortFlagKey] =
+  RpcTcpPortFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcHttpHostFlagKey] =
+  RpcHttpHostFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcHttpPortFlagKey] =
+  RpcHttpPortFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcUseHttpFlagKey] =
+  RpcUseHttpFlag as unknown as CompletableOptionFlag
+remoteFlags[RpcTcpTlsFlagKey] =
+  RpcTcpTlsFlag as unknown as CompletableOptionFlag
 remoteFlags[RpcAuthFlagKey] = RpcAuthFlag as unknown as CompletableOptionFlag
 
 /**
@@ -142,7 +150,12 @@ export const parseIron = (input: string, opts: IronOpts): Promise<bigint> => {
 
       if (minimum !== undefined && value < minimum) {
         reject(
-          new Error(`The minimum ${flagName} is ${CurrencyUtils.renderOre(minimum, true)}`),
+          new Error(
+            `The minimum ${flagName} is ${CurrencyUtils.renderOre(
+              minimum,
+              true,
+            )}`,
+          ),
         )
       }
 

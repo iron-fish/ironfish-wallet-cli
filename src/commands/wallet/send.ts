@@ -163,7 +163,9 @@ export class Send extends IronfishCommand {
 
     const memo =
       flags.memo?.trim() ??
-      (await CliUx.ux.prompt('Enter the memo (or leave blank)', { required: false }))
+      (await CliUx.ux.prompt('Enter the memo (or leave blank)', {
+        required: false,
+      }))
 
     if (!isValidPublicAddress(to)) {
       this.log(`A valid public address is required`)
@@ -213,7 +215,10 @@ export class Send extends IronfishCommand {
       this.exit(0)
     }
 
-    if (!flags.confirm && !(await this.confirm(assetId, amount, raw.fee, from, to, memo))) {
+    if (
+      !flags.confirm &&
+      !(await this.confirm(assetId, amount, raw.fee, from, to, memo))
+    ) {
       this.error('Transaction aborted.')
     }
 
@@ -231,15 +236,27 @@ export class Send extends IronfishCommand {
 
     if (response.content.accepted === false) {
       this.warn(
-        `Transaction '${transaction.hash().toString('hex')}' was not accepted into the mempool`,
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' was not accepted into the mempool`,
       )
     }
 
     if (response.content.broadcasted === false) {
-      this.warn(`Transaction '${transaction.hash().toString('hex')}' failed to broadcast`)
+      this.warn(
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' failed to broadcast`,
+      )
     }
 
-    this.log(`Sent ${CurrencyUtils.renderIron(amount, true, assetId)} to ${to} from ${from}`)
+    this.log(
+      `Sent ${CurrencyUtils.renderIron(
+        amount,
+        true,
+        assetId,
+      )} to ${to} from ${from}`,
+    )
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
     this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
     this.log(`Memo: ${memo}`)

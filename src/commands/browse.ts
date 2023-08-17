@@ -4,7 +4,12 @@
 import { Platform } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { ConfigFlag, ConfigFlagKey, DataDirFlag, DataDirFlagKey } from '../flags'
+import {
+  ConfigFlag,
+  ConfigFlagKey,
+  DataDirFlag,
+  DataDirFlagKey,
+} from '../flags'
 import { PlatformUtils } from '../utils'
 
 export class BrowseCommand extends IronfishCommand {

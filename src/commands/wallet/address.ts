@@ -36,6 +36,8 @@ export class AddressCommand extends IronfishCommand {
       this.error(`An error occurred while fetching the public key.`)
     }
 
-    this.log(`Account: ${response.content.account}, public key: ${response.content.publicKey}`)
+    this.log(
+      `Account: ${response.content.account}, public key: ${response.content.publicKey}`,
+    )
   }
 }

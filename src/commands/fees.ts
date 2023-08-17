@@ -44,14 +44,17 @@ export class FeeCommand extends IronfishCommand {
     const config = await client.config.getConfig()
 
     const slow =
-      config.content['feeEstimatorPercentileSlow'] || DEFAULT_FEE_ESTIMATOR_PERCENTILE_SLOW
+      config.content['feeEstimatorPercentileSlow'] ||
+      DEFAULT_FEE_ESTIMATOR_PERCENTILE_SLOW
     const average =
       config.content['feeEstimatorPercentileAverage'] ||
       DEFAULT_FEE_ESTIMATOR_PERCENTILE_AVERAGE
     const fast =
-      config.content['feeEstimatorPercentileFast'] || DEFAULT_FEE_ESTIMATOR_PERCENTILE_FAST
+      config.content['feeEstimatorPercentileFast'] ||
+      DEFAULT_FEE_ESTIMATOR_PERCENTILE_FAST
     const numBlocks =
-      config.content['feeEstimatorMaxBlockHistory'] || DEFAULT_FEE_ESTIMATOR_MAX_BLOCK_HISTORY
+      config.content['feeEstimatorMaxBlockHistory'] ||
+      DEFAULT_FEE_ESTIMATOR_MAX_BLOCK_HISTORY
 
     this.log(
       `Fee rates are estimated from the distribution of transaction fees over the last ${numBlocks} blocks.\n`,

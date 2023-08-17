@@ -75,23 +75,31 @@ export class PostCommand extends IronfishCommand {
 
     CliUx.ux.action.stop()
 
-    const posted = new Transaction(Buffer.from(response.content.transaction, 'hex'))
+    const posted = new Transaction(
+      Buffer.from(response.content.transaction, 'hex'),
+    )
 
     if (response.content.accepted === false) {
       this.warn(
-        `Transaction '${posted.hash().toString('hex')}' was not accepted into the mempool`,
+        `Transaction '${posted
+          .hash()
+          .toString('hex')}' was not accepted into the mempool`,
       )
     }
 
     if (response.content.broadcasted === false) {
-      this.warn(`Transaction '${posted.hash().toString('hex')}' failed to broadcast`)
+      this.warn(
+        `Transaction '${posted.hash().toString('hex')}' failed to broadcast`,
+      )
     }
 
     this.log(`Posted transaction with hash ${posted.hash().toString('hex')}\n`)
     this.log(response.content.transaction)
 
     if (!flags.broadcast) {
-      this.log(`\nRun "ironfish wallet:transaction:add" to add the transaction to your wallet`)
+      this.log(
+        `\nRun "ironfish wallet:transaction:add" to add the transaction to your wallet`,
+      )
     }
   }
 
@@ -123,7 +131,10 @@ export class PostCommand extends IronfishCommand {
         true,
       )}, with ${raw.mints.length} mints and ${
         raw.burns.length
-      } burns with a fee ${CurrencyUtils.renderIron(raw.fee, true)} using account ${account}`,
+      } burns with a fee ${CurrencyUtils.renderIron(
+        raw.fee,
+        true,
+      )} using account ${account}`,
     )
 
     return CliUx.ux.confirm('Do you want to post this (Y/N)?')

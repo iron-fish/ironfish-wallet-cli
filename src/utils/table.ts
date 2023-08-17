@@ -75,7 +75,9 @@ const asset = <T extends Record<string, unknown>>(options?: {
         header: 'Asset Name',
         get: (row) => {
           Assert.isString(row.assetName)
-          const assetName = BufferUtils.toHuman(Buffer.from(row.assetName, 'hex'))
+          const assetName = BufferUtils.toHuman(
+            Buffer.from(row.assetName, 'hex'),
+          )
           return truncateCol(assetName, MAX_ASSET_NAME_COLUMN_WIDTH)
         },
         minWidth: MAX_ASSET_NAME_COLUMN_WIDTH,

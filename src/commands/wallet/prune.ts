@@ -49,7 +49,10 @@ export default class PruneCommand extends IronfishCommand {
           let count = 0
 
           for await (const transactionValue of account.getTransactions()) {
-            const status = await node.wallet.getTransactionStatus(account, transactionValue)
+            const status = await node.wallet.getTransactionStatus(
+              account,
+              transactionValue,
+            )
 
             if (status === TransactionStatus.EXPIRED) {
               count = +1
@@ -60,7 +63,9 @@ export default class PruneCommand extends IronfishCommand {
             }
           }
 
-          this.log(`Account ${account.displayName} has ${count} expired transactions`)
+          this.log(
+            `Account ${account.displayName} has ${count} expired transactions`,
+          )
         }
       }
     }

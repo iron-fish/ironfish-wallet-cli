@@ -34,10 +34,14 @@ export default class Debug extends IronfishCommand {
     } catch (err) {
       if (err instanceof DatabaseIsLockedError) {
         this.log('Database in use, skipping output that requires database.')
-        this.log('Stop the node and run the debug command again to show full output.\n')
+        this.log(
+          'Stop the node and run the debug command again to show full output.\n',
+        )
         dbOpen = false
       } else if (err instanceof DatabaseOpenError) {
-        this.log('Database cannot be opened, skipping output that requires database.\n')
+        this.log(
+          'Database cannot be opened, skipping output that requires database.\n',
+        )
         this.log(ErrorUtils.renderError(err, true) + '\n')
         dbOpen = false
       }
@@ -57,10 +61,14 @@ export default class Debug extends IronfishCommand {
     const cpuThreads = cpus.length
 
     const memTotal = FileUtils.formatMemorySize(os.totalmem())
-    const heapTotal = FileUtils.formatMemorySize(getHeapStatistics().total_available_size)
+    const heapTotal = FileUtils.formatMemorySize(
+      getHeapStatistics().total_available_size,
+    )
 
     const telemetryEnabled = this.sdk.config.get('enableTelemetry').toString()
-    const assetVerificationEnabled = this.sdk.config.get('enableAssetVerification').toString()
+    const assetVerificationEnabled = this.sdk.config
+      .get('enableAssetVerification')
+      .toString()
 
     const nodeName = this.sdk.config.get('nodeName').toString()
     const blockGraffiti = this.sdk.config.get('blockGraffiti').toString()
@@ -109,12 +117,18 @@ export default class Debug extends IronfishCommand {
       const shortId = accountId.slice(0, 6)
 
       output.set(`Account ${shortId} uuid`, `${accountId}`)
-      output.set(`Account ${shortId} name`, `${account?.name || `ACCOUNT NOT FOUND`}`)
+      output.set(
+        `Account ${shortId} name`,
+        `${account?.name || `ACCOUNT NOT FOUND`}`,
+      )
       output.set(
         `Account ${shortId} head hash`,
         `${headHash ? headHash.toString('hex') : 'NULL'}`,
       )
-      output.set(`Account ${shortId} head in chain`, `${headInChain.toString()}`)
+      output.set(
+        `Account ${shortId} head in chain`,
+        `${headInChain.toString()}`,
+      )
       output.set(`Account ${shortId} sequence`, `${headSequence}`)
     }
 
