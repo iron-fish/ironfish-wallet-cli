@@ -1,0 +1,76 @@
+{
+  "name": "ironfish-wallet-cli",
+  "version": "0.0.0",
+  "description": "CLI for running a standalone wallet",
+  "author": "Iron Fish <contact@ironfish.network> (https://ironfish.network)",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iron-fish/ironfish-wallet-cli.git"
+  },
+  "license": "MPL-2.0",
+  "files": [
+    "/bin",
+    "/build/**/*.js",
+    "/build/**/*.d.ts",
+    "/build/**/*.d.ts.map",
+    "/build/**/*.json",
+    "/oclif.manifest.json"
+  ],
+  "engines": {
+    "node": "18.x"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.16",
+    "jest": "29.3.1",
+    "jest-jasmine2": "29.3.1",
+    "oclif": "2.6.0",
+    "typescript": "4.3.4",
+    "yarn": "1.22.10"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "tsc -b && eslint --ext .ts,.tsx,.js,.jsx src/",
+    "lint:fix": "tsc -b && eslint --ext .ts,.tsx,.js,.jsx src/ --fix",
+    "start:dev": "node start",
+    "start": "yarn build && yarn start:js",
+    "start:js": "cross-env OCLIF_TS_NODE=0 IRONFISH_DEBUG=1 node --expose-gc --inspect=:0 --inspect-publish-uid=http --enable-source-maps bin/run",
+    "postpack": "rimraf oclif.manifest.json",
+    "clean": "rimraf build",
+    "prepack": "rimraf build && yarn build && oclif manifest && oclif readme",
+    "oclif:version": "oclif readme && git add README.md"
+  },
+  "dependencies": {
+    "@ironfish/rust-nodejs": "1.7.0",
+    "@ironfish/sdk": "1.8.0",
+    "@oclif/core": "1.23.1",
+    "@oclif/plugin-help": "5.1.12",
+    "@oclif/plugin-not-found": "2.3.1",
+    "@oclif/plugin-warn-if-update-available": "2.0.40",
+    "json-colorizer": "2.2.2"
+  },
+  "oclif": {
+    "macos": {
+      "identifier": "network.ironfish.cli"
+    },
+    "commands": "./build/src/commands",
+    "hooks": {
+      "init": "./build/src/hooks/version"
+    },
+    "bin": "ironfish-wallet-cli",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found",
+      "@oclif/plugin-warn-if-update-available"
+    ],
+    "topics": {}
+  },
+  "bin": {
+    "ironfish-wallet-cli": "./bin/run"
+  },
+  "bugs": {
+    "url": "https://github.com/iron-fish/ironfish-wallet-cli/issues"
+  },
+  "homepage": "https://ironfish.network"
+}
