@@ -1,7 +1,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { ALL_API_NAMESPACES, NodeUtils, RpcMemoryClient } from '@ironfish/sdk'
+import {
+  ApiNamespace,
+  NodeUtils,
+  RpcMemoryClient,
+} from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import fs from 'fs/promises'
 import repl from 'node:repl'
@@ -32,10 +36,17 @@ export default class Repl extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(Repl)
 
-    const node = await this.sdk.node()
+    const namespaces = [
+      ApiNamespace.config,
+      ApiNamespace.rpc,
+      ApiNamespace.wallet,
+      ApiNamespace.worker,
+    ]
+
+    const node = await this.sdk.walletNode()
     const client = new RpcMemoryClient(
       this.logger,
-      node.rpc.getRouter(ALL_API_NAMESPACES),
+      node.rpc.getRouter(namespaces),
     )
 
     if (flags.opendb) {
@@ -43,12 +54,6 @@ export default class Repl extends IronfishCommand {
     }
 
     this.log('Examples:')
-    this.log('  Get the head block hash')
-    this.log(`  > chain.head.hash.toString('hex')`)
-    this.log('\n  Get the head block sequence')
-    this.log(`  > chain.head.sequence`)
-    this.log('\n  Get a block at a sequence')
-    this.log(`  > await chain.getHeaderAtSequence(1)`)
     this.log('\n  List all account names')
     this.log(`  > wallet.listAccounts().map((a) => a.name)`)
     this.log(`\n  Get the balance of an account`)
@@ -66,9 +71,7 @@ export default class Repl extends IronfishCommand {
     server.context.sdk = this.sdk
     server.context.client = client
     server.context.node = node
-    server.context.chain = node.chain
     server.context.wallet = node.wallet
-    server.context.memPool = node.memPool
 
     // Setup command history file
     // eslint-disable-next-line @typescript-eslint/no-empty-function

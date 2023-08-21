@@ -6,9 +6,9 @@ import {
   DatabaseOpenError,
   ErrorUtils,
   FileUtils,
-  FullNode,
   IronfishPKG,
 } from '@ironfish/sdk'
+import { WalletNode } from '@ironfish/sdk/build/src/walletNode'
 import { execSync } from 'child_process'
 import os from 'os'
 import { getHeapStatistics } from 'v8'
@@ -26,7 +26,7 @@ export default class Debug extends IronfishCommand {
   }
 
   async start(): Promise<void> {
-    const node = await this.sdk.node({ autoSeed: false })
+    const node = await this.sdk.walletNode()
 
     let dbOpen = true
     try {
@@ -55,7 +55,7 @@ export default class Debug extends IronfishCommand {
     this.display(output)
   }
 
-  baseOutput(node: FullNode): Map<string, string> {
+  baseOutput(node: WalletNode): Map<string, string> {
     const cpus = os.cpus()
     const cpuNames = [...new Set(cpus.map((c) => c.model))]
     const cpuThreads = cpus.length
@@ -69,9 +69,6 @@ export default class Debug extends IronfishCommand {
     const assetVerificationEnabled = this.sdk.config
       .get('enableAssetVerification')
       .toString()
-
-    const nodeName = this.sdk.config.get('nodeName').toString()
-    const blockGraffiti = this.sdk.config.get('blockGraffiti').toString()
 
     let cmdInPath: boolean
     try {
@@ -94,12 +91,10 @@ export default class Debug extends IronfishCommand {
       ['Garbage Collector Exposed', `${String(!!global.gc)}`],
       ['Telemetry enabled', `${telemetryEnabled}`],
       ['Asset Verification enabled', `${assetVerificationEnabled}`],
-      ['Node name', `${nodeName}`],
-      ['Block graffiti', `${blockGraffiti}`],
     ])
   }
 
-  async outputRequiringDB(node: FullNode): Promise<Map<string, string>> {
+  async outputRequiringDB(node: WalletNode): Promise<Map<string, string>> {
     const output = new Map<string, string>()
 
     const headHashes = new Map<string, Buffer | null>()
@@ -110,9 +105,11 @@ export default class Debug extends IronfishCommand {
     for (const [accountId, headHash] of headHashes.entries()) {
       const account = node.wallet.getAccount(accountId)
 
-      const blockHeader = headHash ? await node.chain.getHeader(headHash) : null
-      const headInChain = !!blockHeader
-      const headSequence = blockHeader?.sequence || 'null'
+      const response = headHash
+        ? await node.wallet.chainGetBlock({ hash: headHash.toString('hex') })
+        : null
+      const headInChain = !!response
+      const headSequence = response?.block?.sequence || 'null'
 
       const shortId = accountId.slice(0, 6)
 
