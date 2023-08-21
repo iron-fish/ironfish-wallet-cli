@@ -4,6 +4,7 @@
 import {
   ApiNamespace,
   IronfishSdk,
+  NodeUtils,
   RpcClient,
   RpcMemoryClient,
 } from '@ironfish/sdk'
@@ -34,5 +35,54 @@ export async function connectRpcConfig(
     sdk.logger,
     node.rpc.getRouter([ApiNamespace.config]),
   )
+  return clientMemory
+}
+
+export async function connectRpcWallet(
+  sdk: IronfishSdk,
+  options: {
+    forceLocal?: boolean
+    forceRemote?: boolean
+    connectNodeClient?: boolean
+  } = {
+    forceLocal: false,
+    forceRemote: false,
+    connectNodeClient: false,
+  },
+): Promise<Pick<RpcClient, 'config' | 'rpc' | 'wallet' | 'worker'>> {
+  const forceRemote = options.forceRemote || sdk.config.get('enableRpcTcp')
+
+  if (!options.forceLocal) {
+    if (forceRemote) {
+      await sdk.client.connect()
+      return sdk.client
+    }
+
+    const connected = await sdk.client.tryConnect()
+    if (connected) {
+      return sdk.client
+    }
+  }
+
+  const namespaces = [
+    ApiNamespace.config,
+    ApiNamespace.rpc,
+    ApiNamespace.wallet,
+    ApiNamespace.worker,
+  ]
+
+  const node = await sdk.walletNode({
+    connectNodeClient: !!options.connectNodeClient,
+  })
+  const clientMemory = new RpcMemoryClient(
+    sdk.logger,
+    node.rpc.getRouter(namespaces),
+  )
+
+  await NodeUtils.waitForOpen(node)
+  if (options.connectNodeClient) {
+    await node.connectRpc()
+  }
+
   return clientMemory
 }
