@@ -6,6 +6,7 @@ import { Flags } from '@oclif/core'
 import blessed from 'blessed'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export default class Status extends IronfishCommand {
   static description = 'Show the status of the worker pool'
@@ -23,7 +24,7 @@ export default class Status extends IronfishCommand {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
-      const client = await this.sdk.connectRpc()
+      const client = await connectRpcWallet(this.sdk)
       const response = await client.worker.getWorkersStatus()
       this.log(renderStatus(response.content))
       this.exit(0)
