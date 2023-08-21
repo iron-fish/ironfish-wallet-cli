@@ -50,7 +50,7 @@ export const DataDirFlag = Flags.string({
   char: 'd',
   default: '~/.ironfish-wallet',
   description: 'The path to the data dir',
-  env: 'IRONFISH_DATA_DIR',
+  env: 'IRONFISH_WALLET_DATA_DIR',
 })
 
 export const RpcUseIpcFlag = Flags.boolean({
