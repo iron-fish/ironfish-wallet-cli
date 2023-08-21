@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class AddressCommand extends IronfishCommand {
   static description = `Display your account address
@@ -26,7 +27,9 @@ export class AddressCommand extends IronfishCommand {
     const { args } = await this.parse(AddressCommand)
     const account = args.account as string | undefined
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     const response = await client.wallet.getAccountPublicKey({
       account: account,

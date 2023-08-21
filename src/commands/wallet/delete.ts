@@ -5,6 +5,7 @@
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class DeleteCommand extends IronfishCommand {
   static description = `Permanently delete an account`
@@ -35,7 +36,9 @@ export class DeleteCommand extends IronfishCommand {
     const wait = flags.wait
     const account = args.account as string
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     CliUx.ux.action.start(`Deleting account '${account}'`)
     const response = await client.wallet.removeAccount({

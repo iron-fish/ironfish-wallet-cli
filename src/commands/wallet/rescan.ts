@@ -8,6 +8,7 @@ import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
 import { ProgressBar } from '../../types'
 import { hasUserResponseError } from '../../utils'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class RescanCommand extends IronfishCommand {
   static description = `Rescan the blockchain for transactions. Clears wallet disk caches before rescanning.`
@@ -39,7 +40,7 @@ export class RescanCommand extends IronfishCommand {
       this.error('You cannot pass both --local and --no-follow')
     }
 
-    const client = await this.sdk.connectRpc(local)
+    const client = await connectRpcWallet(this.sdk, { forceLocal: local })
 
     CliUx.ux.action.start('Asking node to start scanning', undefined, {
       stdout: true,

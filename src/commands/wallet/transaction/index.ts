@@ -5,6 +5,7 @@ import { BufferUtils, CurrencyUtils, TimeUtils } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
+import { connectRpcWallet } from '../../../utils/clients'
 
 export class TransactionCommand extends IronfishCommand {
   static description = `Display an account transaction`
@@ -33,7 +34,7 @@ export class TransactionCommand extends IronfishCommand {
     const hash = args.hash as string
     const account = args.account as string | undefined
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk)
 
     const response = await client.wallet.getAccountTransaction({
       account,

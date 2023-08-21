@@ -5,6 +5,7 @@ import { PromiseUtils } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class ImportCommand extends IronfishCommand {
   static description = `Import an account`
@@ -38,7 +39,9 @@ export class ImportCommand extends IronfishCommand {
     const { flags, args } = await this.parse(ImportCommand)
     const blob = args.blob as string | undefined
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     let account: string
     if (blob) {

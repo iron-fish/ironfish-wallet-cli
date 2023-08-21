@@ -5,12 +5,12 @@ import {
   CurrencyUtils,
   GetBalanceResponse,
   isNativeIdentifier,
-  RpcClient,
 } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
 import { renderAssetName } from '../../utils'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class BalanceCommand extends IronfishCommand {
   static description =
@@ -48,15 +48,13 @@ export class BalanceCommand extends IronfishCommand {
     },
   ]
 
-  async client(): Promise<RpcClient> {
-    return this.sdk.connectRpc()
-  }
-
   async start(): Promise<void> {
     const { flags, args } = await this.parse(BalanceCommand)
     const account = args.account as string | undefined
 
-    const client = await this.client()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     const response = await client.wallet.getAccountBalance({
       account,

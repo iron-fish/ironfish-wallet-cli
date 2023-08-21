@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class UseCommand extends IronfishCommand {
   static description = 'Change the default account used by all commands'
@@ -24,7 +25,9 @@ export class UseCommand extends IronfishCommand {
     const { args } = await this.parse(UseCommand)
     const account = args.account as string
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
     await client.wallet.useAccount({ account })
     this.log(`The default account is now: ${account}`)
   }

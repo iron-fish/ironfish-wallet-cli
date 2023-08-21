@@ -6,6 +6,7 @@ import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
 import { compareAssets, renderAssetNameFromHex } from '../../utils'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class BalancesCommand extends IronfishCommand {
   static description = `Display the account's balances for all assets`
@@ -34,7 +35,9 @@ export class BalancesCommand extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags, args } = await this.parse(BalancesCommand)
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     const account = args.account as string | undefined
     const response = await client.wallet.getAccountBalances({

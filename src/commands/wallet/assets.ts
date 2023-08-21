@@ -12,6 +12,7 @@ import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
 import { renderAssetNameFromHex } from '../../utils'
+import { connectRpcWallet } from '../../utils/clients'
 import { TableCols } from '../../utils/table'
 
 const MAX_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH + 1
@@ -43,7 +44,9 @@ export class AssetsCommand extends IronfishCommand {
     const { flags, args } = await this.parse(AssetsCommand)
     const account = args.account as string | undefined
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
     const response = client.wallet.getAssets({
       account,
     })

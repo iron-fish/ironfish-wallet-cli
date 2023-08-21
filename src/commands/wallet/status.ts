@@ -4,6 +4,7 @@
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class StatusCommand extends IronfishCommand {
   static description = `Get status of an account`
@@ -17,7 +18,7 @@ export class StatusCommand extends IronfishCommand {
     const { args, flags } = await this.parse(StatusCommand)
     const account = args.account as string | undefined
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk)
 
     const response = await client.wallet.getAccountsStatus({
       account: account,

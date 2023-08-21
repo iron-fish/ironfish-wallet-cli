@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class RenameCommand extends IronfishCommand {
   static description = 'Change the name of an account'
@@ -31,7 +32,9 @@ export class RenameCommand extends IronfishCommand {
     const account = args.account as string
     const newName = args['new-name'] as string
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
     await client.wallet.renameAccount({ account, newName })
     this.log(`Account ${account} renamed to ${newName}`)
   }

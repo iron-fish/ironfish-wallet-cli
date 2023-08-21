@@ -11,6 +11,7 @@ import {
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class PostCommand extends IronfishCommand {
   static summary = 'Post a raw transaction'
@@ -55,7 +56,9 @@ export class PostCommand extends IronfishCommand {
     const serialized = Buffer.from(transaction, 'hex')
     const raw = RawTransactionSerde.deserialize(serialized)
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: flags.broadcast,
+    })
 
     if (!flags.confirm) {
       const confirm = await this.confirm(client, raw, flags.account)

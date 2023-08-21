@@ -4,6 +4,7 @@
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class WhichCommand extends IronfishCommand {
   static description = `Show the account currently used.
@@ -23,7 +24,9 @@ export class WhichCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(WhichCommand)
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     const {
       content: {

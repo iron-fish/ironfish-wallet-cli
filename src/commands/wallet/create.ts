@@ -5,6 +5,7 @@
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class CreateCommand extends IronfishCommand {
   static description = `Create a new account for sending and receiving coins`
@@ -32,7 +33,9 @@ export class CreateCommand extends IronfishCommand {
       })
     }
 
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+    })
 
     this.log(`Creating account ${name}`)
     const result = await client.wallet.createAccount({ name })

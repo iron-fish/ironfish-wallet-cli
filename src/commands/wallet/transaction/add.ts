@@ -4,6 +4,7 @@
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
+import { connectRpcWallet } from '../../../utils/clients'
 
 export class TransactionAddCommand extends IronfishCommand {
   static description = `Add a transaction to your wallet`
@@ -31,7 +32,9 @@ export class TransactionAddCommand extends IronfishCommand {
     const transaction = args.transaction as string
 
     CliUx.ux.action.start(`Adding transaction`)
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: flags.broadcast,
+    })
     const response = await client.wallet.addTransaction({
       transaction,
       broadcast: flags.broadcast,

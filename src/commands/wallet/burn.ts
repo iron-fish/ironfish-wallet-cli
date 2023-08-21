@@ -13,6 +13,7 @@ import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { IronFlag, RemoteFlags } from '../../flags'
 import { selectAsset } from '../../utils/asset'
+import { connectRpcWallet } from '../../utils/clients'
 import { promptCurrency } from '../../utils/currency'
 import { selectFee } from '../../utils/fees'
 import { watchTransaction } from '../../utils/transaction'
@@ -79,7 +80,9 @@ export class Burn extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(Burn)
-    const client = await this.sdk.connectRpc()
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: !flags.offline,
+    })
 
     if (!flags.offline) {
       const status = await client.wallet.getNodeStatus()

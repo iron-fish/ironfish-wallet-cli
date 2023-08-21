@@ -8,6 +8,7 @@ import jsonColorizer from 'json-colorizer'
 import path from 'path'
 import { IronfishCommand } from '../../command'
 import { ColorFlag, ColorFlagKey, RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class ExportCommand extends IronfishCommand {
   static description = `Export an account`
@@ -68,7 +69,10 @@ export class ExportCommand extends IronfishCommand {
       ? AccountFormat.JSON
       : AccountFormat.Bech32
 
-    const client = await this.sdk.connectRpc(local)
+    const client = await connectRpcWallet(this.sdk, {
+      connectNodeClient: false,
+      forceLocal: local,
+    })
     const response = await client.wallet.exportAccount({
       account,
       viewOnly,
