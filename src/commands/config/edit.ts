@@ -15,6 +15,7 @@ import {
   DataDirFlagKey,
 } from '../../flags'
 import { launchEditor } from '../../utils'
+import { connectRpcConfig } from '../../utils/clients'
 
 const mkdtempAsync = promisify(mkdtemp)
 const writeFileAsync = promisify(writeFile)
@@ -44,7 +45,7 @@ export class EditCommand extends IronfishCommand {
       this.exit(code || undefined)
     }
 
-    const client = await this.sdk.connectRpc(!flags.remote)
+    const client = await connectRpcConfig(this.sdk, !flags.remote)
     const response = await client.config.getConfig({ user: true })
     const output = JSON.stringify(response.content, undefined, '   ')
 
