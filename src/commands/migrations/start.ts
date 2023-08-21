@@ -32,7 +32,7 @@ export class StartCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(StartCommand)
 
-    const node = await this.sdk.node()
+    const node = await this.sdk.walletNode({ connectNodeClient: false })
     await node.migrator.migrate({ quiet: flags.quiet, dryRun: flags.dry })
   }
 }
