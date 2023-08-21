@@ -10,28 +10,29 @@ import {
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { IronFlag, RemoteFlags } from '../../flags'
-import { selectAsset } from '../../utils/asset'
-import { connectRpcWallet } from '../../utils/clients'
-import { promptCurrency } from '../../utils/currency'
-import { selectFee } from '../../utils/fees'
-import { watchTransaction } from '../../utils/transaction'
+import { IronfishCommand } from '../command'
+import { IronFlag, RemoteFlags } from '../flags'
+import { selectAsset } from '../utils/asset'
+import { connectRpcWallet } from '../utils/clients'
+import { promptCurrency } from '../utils/currency'
+import { selectFee } from '../utils/fees'
+import { watchTransaction } from '../utils/transaction'
 
-export class Burn extends IronfishCommand {
-  static description = 'Burn tokens and decrease supply for a given asset'
+export class Mint extends IronfishCommand {
+  static description = 'Mint tokens and increase supply for a given asset'
 
   static examples = [
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
+    '$ ironfish wallet:mint --metadata "see more here" --name mycoin --amount 1000',
+    '$ ironfish wallet:mint --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
+    '$ ironfish wallet:mint --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
+    '$ ironfish wallet:mint --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
   ]
 
   static flags = {
     ...RemoteFlags,
     account: Flags.string({
       char: 'f',
-      description: 'The account to burn from',
+      description: 'The account to mint from',
     }),
     fee: IronFlag({
       char: 'o',
@@ -41,12 +42,23 @@ export class Burn extends IronfishCommand {
     }),
     amount: IronFlag({
       char: 'a',
-      description: 'Amount of coins to burn',
+      description: 'Amount of coins to mint in IRON',
       flagName: 'amount',
     }),
     assetId: Flags.string({
       char: 'i',
       description: 'Identifier for the asset',
+      required: false,
+    }),
+    metadata: Flags.string({
+      char: 'm',
+      description: 'Metadata for the asset',
+      required: false,
+    }),
+    name: Flags.string({
+      char: 'n',
+      description: 'Name for the asset',
+      required: false,
     }),
     confirm: Flags.boolean({
       default: false,
@@ -61,7 +73,7 @@ export class Burn extends IronfishCommand {
     rawTransaction: Flags.boolean({
       default: false,
       description:
-        'Return raw transaction. Use it to create a transaction but not post to the network',
+        'Return the raw transaction. Used to create a transaction but not post to the network',
     }),
     expiration: Flags.integer({
       char: 'e',
@@ -79,7 +91,7 @@ export class Burn extends IronfishCommand {
   }
 
   async start(): Promise<void> {
-    const { flags } = await this.parse(Burn)
+    const { flags } = await this.parse(Mint)
     const client = await connectRpcWallet(this.sdk, {
       connectNodeClient: !flags.offline,
     })
@@ -108,22 +120,51 @@ export class Burn extends IronfishCommand {
       account = response.content.account.name
     }
 
-    let assetId = flags.assetId
+    if (flags.expiration !== undefined && flags.expiration < 0) {
+      this.log('Expiration sequence must be non-negative')
+      this.exit(1)
+    }
 
-    if (assetId == null) {
+    let assetId = flags.assetId
+    let metadata = flags.metadata
+    let name = flags.name
+
+    // We can assume the prompt can be skipped if at least one of metadata or
+    // name is provided
+    let isMintingNewAsset = Boolean(name || metadata)
+    if (!assetId && !metadata && !name) {
+      isMintingNewAsset = await CliUx.ux.confirm(
+        'Do you want to create a new asset (Y/N)?',
+      )
+    }
+
+    if (isMintingNewAsset) {
+      if (!name) {
+        name = await CliUx.ux.prompt('Enter the name for the new asset', {
+          required: true,
+        })
+      }
+
+      if (!metadata) {
+        metadata = await CliUx.ux.prompt('Enter metadata for the new asset', {
+          default: '',
+          required: false,
+        })
+      }
+    } else if (!assetId) {
       const asset = await selectAsset(client, account, {
-        action: 'burn',
+        action: 'mint',
         showNativeAsset: false,
-        showNonCreatorAsset: true,
+        showNonCreatorAsset: false,
         showSingleAssetChoice: true,
         confirmations: flags.confirmations,
       })
 
-      assetId = asset?.id
-    }
+      if (!asset) {
+        this.error(`You must have an existing asset. Try creating a new one.`)
+      }
 
-    if (assetId == null) {
-      this.error(`You must have a custom asset in order to burn.`)
+      assetId = asset.id
     }
 
     let amount = flags.amount
@@ -131,23 +172,20 @@ export class Burn extends IronfishCommand {
       amount = await promptCurrency({
         client: client,
         required: true,
-        text: 'Enter the amount of the custom asset to burn',
+        text: 'Enter the amount',
         minimum: 1n,
         logger: this.logger,
-        balance: {
-          account,
-          confirmations: flags.confirmations,
-          assetId,
-        },
       })
     }
 
     const params: CreateTransactionRequest = {
       account,
       outputs: [],
-      burns: [
+      mints: [
         {
           assetId,
+          name,
+          metadata,
           value: CurrencyUtils.encode(amount),
         },
       ],
@@ -157,6 +195,7 @@ export class Burn extends IronfishCommand {
     }
 
     let raw: RawTransaction
+
     if (params.fee === null) {
       raw = await selectFee({
         client,
@@ -180,7 +219,7 @@ export class Burn extends IronfishCommand {
 
     if (
       !flags.confirm &&
-      !(await this.confirm(assetId, amount, raw.fee, account))
+      !(await this.confirm(account, amount, raw.fee, assetId, name, metadata))
     ) {
       this.error('Transaction aborted.')
     }
@@ -196,6 +235,8 @@ export class Burn extends IronfishCommand {
     const transaction = new Transaction(bytes)
 
     CliUx.ux.action.stop()
+
+    const minted = transaction.mints[0]
 
     if (response.content.accepted === false) {
       this.warn(
@@ -213,20 +254,21 @@ export class Burn extends IronfishCommand {
       )
     }
 
-    const assetResponse = await client.wallet.getAsset({
-      account,
-      id: assetId,
-      confirmations: flags.confirmations,
-    })
-    const assetName = BufferUtils.toHuman(
-      Buffer.from(assetResponse.content.name, 'hex'),
+    this.log(
+      `Minted asset ${BufferUtils.toHuman(
+        minted.asset.name(),
+      )} from ${account}`,
     )
-
-    this.log(`Burned asset ${assetName} from ${account}`)
-    this.log(`Asset Identifier: ${assetId}`)
-    this.log(`Amount: ${CurrencyUtils.renderIron(amount)}`)
-    this.log(`Hash: ${transaction.hash().toString('hex')}`)
+    this.log(`Asset Identifier: ${minted.asset.id().toString('hex')}`)
+    this.log(
+      `Value: ${CurrencyUtils.renderIron(
+        minted.value,
+        true,
+        minted.asset.id().toString('hex'),
+      )}`,
+    )
     this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
+    this.log(`Hash: ${transaction.hash().toString('hex')}`)
     this.log(
       `\nIf the transaction is mined, it will appear here https://explorer.ironfish.network/transaction/${transaction
         .hash()
@@ -246,21 +288,20 @@ export class Burn extends IronfishCommand {
   }
 
   async confirm(
-    assetId: string,
+    account: string,
     amount: bigint,
     fee: bigint,
-    account: string,
+    assetId?: string,
+    name?: string,
+    metadata?: string,
   ): Promise<boolean> {
+    const nameString = name ? `\nName: ${name}` : ''
+    const metadataString = metadata ? `\nMetadata: ${metadata}` : ''
     this.log(
-      `You are about to burn: ${CurrencyUtils.renderIron(
-        amount,
-        true,
-        assetId,
-      )} plus a transaction fee of ${CurrencyUtils.renderIron(
-        fee,
-        true,
-      )} with the account ${account}`,
+      `You are about to mint an asset with the account ${account}:${nameString}${metadataString}`,
     )
+    this.log(`Amount: ${CurrencyUtils.renderIron(amount, !!assetId, assetId)}`)
+    this.log(`Fee: ${CurrencyUtils.renderIron(fee, true)}`)
 
     return CliUx.ux.confirm('Do you confirm (Y/N)?')
   }

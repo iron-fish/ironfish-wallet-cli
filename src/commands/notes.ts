@@ -3,10 +3,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CurrencyUtils } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
-import { TableCols } from '../../utils/table'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
+import { TableCols } from '../utils/table'
 
 const { sort: _, ...tableFlags } = CliUx.ux.table.flags()
 export class NotesCommand extends IronfishCommand {

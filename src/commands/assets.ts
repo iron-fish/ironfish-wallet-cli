@@ -9,11 +9,11 @@ import {
 } from '@ironfish/rust-nodejs'
 import { BufferUtils } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { renderAssetNameFromHex } from '../../utils'
-import { connectRpcWallet } from '../../utils/clients'
-import { TableCols } from '../../utils/table'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { renderAssetNameFromHex } from '../utils'
+import { connectRpcWallet } from '../utils/clients'
+import { TableCols } from '../utils/table'
 
 const MAX_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH + 1
 const MIN_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH / 2 + 1

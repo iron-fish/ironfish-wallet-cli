@@ -11,13 +11,13 @@ import {
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { IronFlag, RemoteFlags } from '../../flags'
-import { selectAsset } from '../../utils/asset'
-import { connectRpcWallet } from '../../utils/clients'
-import { promptCurrency } from '../../utils/currency'
-import { selectFee } from '../../utils/fees'
-import { watchTransaction } from '../../utils/transaction'
+import { IronfishCommand } from '../command'
+import { IronFlag, RemoteFlags } from '../flags'
+import { selectAsset } from '../utils/asset'
+import { connectRpcWallet } from '../utils/clients'
+import { promptCurrency } from '../utils/currency'
+import { selectFee } from '../utils/fees'
+import { watchTransaction } from '../utils/transaction'
 
 export class Send extends IronfishCommand {
   static description = `Send coins to another account`

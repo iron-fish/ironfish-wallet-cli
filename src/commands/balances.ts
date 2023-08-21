@@ -3,10 +3,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CurrencyUtils, GetBalancesResponse } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { compareAssets, renderAssetNameFromHex } from '../../utils'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { compareAssets, renderAssetNameFromHex } from '../utils'
+import { connectRpcWallet } from '../utils/clients'
 
 export class BalancesCommand extends IronfishCommand {
   static description = `Display the account's balances for all assets`

@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { Flags } from '@oclif/core'
-import { IronfishCommand } from '../../../command'
-import { RemoteFlags } from '../../../flags'
-import { connectRpcWallet } from '../../../utils/clients'
-import { watchTransaction } from '../../../utils/transaction'
+import { IronfishCommand } from '../../command'
+import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
+import { watchTransaction } from '../../utils/transaction'
 
 export class WatchTxCommand extends IronfishCommand {
   static description = `Display an account transaction`

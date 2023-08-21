@@ -7,10 +7,10 @@ import {
   isNativeIdentifier,
 } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { renderAssetName } from '../../utils'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { renderAssetName } from '../utils'
+import { connectRpcWallet } from '../utils/clients'
 
 export class BalanceCommand extends IronfishCommand {
   static description =
