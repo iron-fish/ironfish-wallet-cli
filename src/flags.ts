@@ -4,7 +4,6 @@
 import {
   CurrencyUtils,
   DEFAULT_CONFIG_NAME,
-  DEFAULT_DATA_DIR,
   DEFAULT_USE_RPC_HTTP,
   DEFAULT_USE_RPC_IPC,
   DEFAULT_USE_RPC_TCP,
@@ -49,9 +48,9 @@ export const ConfigFlag = Flags.string({
 
 export const DataDirFlag = Flags.string({
   char: 'd',
-  default: DEFAULT_DATA_DIR,
+  default: '~/.ironfish-wallet',
   description: 'The path to the data dir',
-  env: 'IRONFISH_DATA_DIR',
+  env: 'IRONFISH_WALLET_DATA_DIR',
 })
 
 export const RpcUseIpcFlag = Flags.boolean({
