@@ -3,8 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { NodeUtils, TransactionStatus } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { LocalFlags } from '../../flags'
+import { IronfishCommand } from '../command'
+import { LocalFlags } from '../flags'
 
 export default class PruneCommand extends IronfishCommand {
   static description = 'Removes expired transactions from the wallet'

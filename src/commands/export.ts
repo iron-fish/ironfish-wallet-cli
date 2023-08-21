@@ -6,9 +6,9 @@ import { CliUx, Flags } from '@oclif/core'
 import fs from 'fs'
 import jsonColorizer from 'json-colorizer'
 import path from 'path'
-import { IronfishCommand } from '../../command'
-import { ColorFlag, ColorFlagKey, RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { ColorFlag, ColorFlagKey, RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
 
 export class ExportCommand extends IronfishCommand {
   static description = `Export an account`

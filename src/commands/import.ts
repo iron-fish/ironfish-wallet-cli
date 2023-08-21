@@ -3,9 +3,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { PromiseUtils } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
 
 export class ImportCommand extends IronfishCommand {
   static description = `Import an account`

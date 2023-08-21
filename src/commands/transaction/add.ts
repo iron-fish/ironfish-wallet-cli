@@ -2,9 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../../command'
-import { RemoteFlags } from '../../../flags'
-import { connectRpcWallet } from '../../../utils/clients'
+import { IronfishCommand } from '../../command'
+import { RemoteFlags } from '../../flags'
+import { connectRpcWallet } from '../../utils/clients'
 
 export class TransactionAddCommand extends IronfishCommand {
   static description = `Add a transaction to your wallet`

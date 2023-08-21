@@ -9,9 +9,9 @@ import {
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
 
 export class PostCommand extends IronfishCommand {
   static summary = 'Post a raw transaction'

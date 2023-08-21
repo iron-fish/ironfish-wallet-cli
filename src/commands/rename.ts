@@ -1,9 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
 
 export class RenameCommand extends IronfishCommand {
   static description = 'Change the name of an account'

@@ -10,10 +10,10 @@ import {
   TransactionType,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
-import { Format, TableCols } from '../../utils/table'
+import { IronfishCommand } from '../command'
+import { RemoteFlags } from '../flags'
+import { connectRpcWallet } from '../utils/clients'
+import { Format, TableCols } from '../utils/table'
 
 const { sort: _, ...tableFlags } = CliUx.ux.table.flags()
 export class TransactionsCommand extends IronfishCommand {
