@@ -20,7 +20,7 @@ export class StatusCommand extends IronfishCommand {
   async start(): Promise<void> {
     await this.parse(StatusCommand)
 
-    const node = await this.sdk.node()
+    const node = await this.sdk.walletNode({ connectNodeClient: false })
     await node.migrator.check()
   }
 }

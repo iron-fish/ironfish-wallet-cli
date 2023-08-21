@@ -22,7 +22,7 @@ export class RevertCommand extends IronfishCommand {
   async start(): Promise<void> {
     await this.parse(RevertCommand)
 
-    const node = await this.sdk.node()
+    const node = await this.sdk.walletNode({ connectNodeClient: false })
     await node.migrator.revert()
   }
 }
