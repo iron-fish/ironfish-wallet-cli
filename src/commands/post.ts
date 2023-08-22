@@ -20,7 +20,7 @@ export class PostCommand extends IronfishCommand {
    The output is a finalized posted transaction.`
 
   static examples = [
-    '$ ironfish wallet:post 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4...',
+    '$ ironfishw post 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4...',
   ]
 
   static flags = {
@@ -101,7 +101,7 @@ export class PostCommand extends IronfishCommand {
 
     if (!flags.broadcast) {
       this.log(
-        `\nRun "ironfish wallet:transaction:add" to add the transaction to your wallet`,
+        `\nRun "ironfishw transaction:add" to add the transaction to your wallet`,
       )
     }
   }

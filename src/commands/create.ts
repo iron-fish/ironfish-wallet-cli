@@ -47,9 +47,7 @@ export class CreateCommand extends IronfishCommand {
     if (isDefaultAccount) {
       this.log(`The default account is now: ${name}`)
     } else {
-      this.log(
-        `Run "ironfish wallet:use ${name}" to set the account as default`,
-      )
+      this.log(`Run "ironfishw use ${name}" to set the account as default`)
     }
   }
 }
