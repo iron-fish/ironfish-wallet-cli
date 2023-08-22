@@ -49,7 +49,6 @@ export default class Debug extends IronfishCommand {
 
     let output = this.baseOutput(node)
     if (dbOpen) {
-      // await node.connectRpc()
       output = new Map([...output, ...(await this.outputRequiringDB(node))])
     }
 
