@@ -8,7 +8,6 @@ import {
   FileUtils,
   IronfishPKG,
 } from '@ironfish/sdk'
-import { HeadValue } from '@ironfish/sdk/build/src/wallet/walletdb/headValue'
 import { WalletNode } from '@ironfish/sdk/build/src/walletNode'
 import { execSync } from 'child_process'
 import os from 'os'
