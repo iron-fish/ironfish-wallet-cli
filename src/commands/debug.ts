@@ -8,6 +8,7 @@ import {
   FileUtils,
   IronfishPKG,
 } from '@ironfish/sdk'
+import { HeadValue } from '@ironfish/sdk/build/src/wallet/walletdb/headValue'
 import { WalletNode } from '@ironfish/sdk/build/src/walletNode'
 import { execSync } from 'child_process'
 import os from 'os'
@@ -49,7 +50,7 @@ export default class Debug extends IronfishCommand {
 
     let output = this.baseOutput(node)
     if (dbOpen) {
-      await node.connectRpc()
+      // await node.connectRpc()
       output = new Map([...output, ...(await this.outputRequiringDB(node))])
     }
 
@@ -98,20 +99,8 @@ export default class Debug extends IronfishCommand {
   async outputRequiringDB(node: WalletNode): Promise<Map<string, string>> {
     const output = new Map<string, string>()
 
-    const headHashes = new Map<string, Buffer | null>()
     for await (const { accountId, head } of node.wallet.walletDb.loadHeads()) {
-      headHashes.set(accountId, head?.hash ?? null)
-    }
-
-    for (const [accountId, headHash] of headHashes.entries()) {
       const account = node.wallet.getAccount(accountId)
-
-      const response = headHash
-        ? await node.wallet.chainGetBlock({ hash: headHash.toString('hex') })
-        : null
-      const headInChain = !!response
-      const headSequence = response?.block?.sequence || 'null'
-
       const shortId = accountId.slice(0, 6)
 
       output.set(`Account ${shortId} uuid`, `${accountId}`)
@@ -119,15 +108,14 @@ export default class Debug extends IronfishCommand {
         `Account ${shortId} name`,
         `${account?.name || `ACCOUNT NOT FOUND`}`,
       )
-      output.set(
-        `Account ${shortId} head hash`,
-        `${headHash ? headHash.toString('hex') : 'NULL'}`,
-      )
-      output.set(
-        `Account ${shortId} head in chain`,
-        `${headInChain.toString()}`,
-      )
-      output.set(`Account ${shortId} sequence`, `${headSequence}`)
+
+      if (head) {
+        output.set(
+          `Account ${shortId} head hash`,
+          `${head.hash.toString('hex')}`,
+        )
+        output.set(`Account ${shortId} sequence`, `${head.sequence}`)
+      }
     }
 
     return output
