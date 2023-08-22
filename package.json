@@ -1,6 +1,6 @@
 {
   "name": "ironfish-wallet-cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "CLI for running a standalone wallet",
   "author": "Iron Fish <contact@ironfish.network> (https://ironfish.network)",
   "main": "build/src/index.js",
@@ -66,13 +66,13 @@
   },
   "oclif": {
     "macos": {
-      "identifier": "network.ironfish.cli"
+      "identifier": "network.ironfish.wallet.cli"
     },
     "commands": "./build/src/commands",
     "hooks": {
       "init": "./build/src/hooks/version"
     },
-    "bin": "ironfish-wallet-cli",
+    "bin": "ironfishw",
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-not-found",
@@ -81,7 +81,7 @@
     "topics": {}
   },
   "bin": {
-    "ironfish-wallet-cli": "./bin/run"
+    "ironfishw": "./bin/run"
   },
   "bugs": {
     "url": "https://github.com/iron-fish/ironfish-wallet-cli/issues"
