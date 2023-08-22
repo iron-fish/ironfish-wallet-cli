@@ -22,9 +22,9 @@ export class Burn extends IronfishCommand {
   static description = 'Burn tokens and decrease supply for a given asset'
 
   static examples = [
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
+    '$ ironfishw burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
+    '$ ironfishw burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
+    '$ ironfishw burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
   ]
 
   static flags = {
@@ -101,7 +101,7 @@ export class Burn extends IronfishCommand {
       if (!response.content.account) {
         this.error(
           `No account is currently active.
-           Use ironfish wallet:create <name> to first create an account`,
+           Use ironfishw create <name> to first create an account`,
         )
       }
 
@@ -174,7 +174,7 @@ export class Burn extends IronfishCommand {
     if (flags.rawTransaction) {
       this.log('Raw Transaction')
       this.log(RawTransactionSerde.serialize(raw).toString('hex'))
-      this.log(`Run "ironfish wallet:post" to post the raw transaction. `)
+      this.log(`Run "ironfishw post" to post the raw transaction. `)
       this.exit(0)
     }
 
