@@ -56,10 +56,9 @@ export default class Repl extends IronfishCommand {
     this.log('Examples:')
     this.log('\n  List all account names')
     this.log(`  > wallet.listAccounts().map((a) => a.name)`)
-    this.log(`\n  Get the balance of an account`)
-    this.log(`  > await wallet.getBalance('default')`)
-    this.log(`\n  Use the RPC node/getStatus`)
-    this.log(`  > (await client.status()).content`)
+    this.log(`\n  Get the balances of an account`)
+    this.log(`  > const account =  await wallet.getAccountByName('default')`)
+    this.log(`  > await wallet.getBalances(account)`)
     this.log('')
 
     const historyPath = path.join(node.config.tempDir, 'repl_history.txt')
