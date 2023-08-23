@@ -59,6 +59,7 @@
     "@oclif/plugin-not-found": "2.3.1",
     "@oclif/plugin-warn-if-update-available": "2.0.40",
     "@types/inquirer": "9.0.3",
+    "inquirer": "8.2.5",
     "blessed": "0.1.81",
     "cross-env": "7.0.3",
     "json-colorizer": "2.2.2",
