@@ -31,6 +31,13 @@ import {
   RpcUseTcpFlagKey,
   VerboseFlag,
   VerboseFlagKey,
+  WalletNodeAuthFlagKey,
+  WalletNodeIpcPathFlagKey,
+  WalletNodeTcpHostFlagKey,
+  WalletNodeTcpPortFlagKey,
+  WalletNodeTcpTlsFlagKey,
+  WalletNodeUseIpcFlagKey,
+  WalletNodeUseTcpFlagKey,
 } from './flags'
 import { IronfishCliPKG } from './package'
 import { hasUserResponseError } from './utils'
@@ -50,6 +57,13 @@ export type FLAGS =
   | typeof RpcTcpTlsFlagKey
   | typeof VerboseFlagKey
   | typeof RpcAuthFlagKey
+  | typeof WalletNodeUseIpcFlagKey
+  | typeof WalletNodeIpcPathFlagKey
+  | typeof WalletNodeUseTcpFlagKey
+  | typeof WalletNodeTcpHostFlagKey
+  | typeof WalletNodeTcpPortFlagKey
+  | typeof WalletNodeTcpTlsFlagKey
+  | typeof WalletNodeAuthFlagKey
 
 export abstract class IronfishCommand extends Command {
   // Yes, this is disabling the type system but any code
@@ -184,6 +198,41 @@ export abstract class IronfishCommand extends Command {
     const rpcAuthFlag = getFlag(flags, RpcAuthFlagKey)
     if (typeof rpcAuthFlag === 'string') {
       internalOverrides.rpcAuthToken = rpcAuthFlag
+    }
+
+    const walletNodeUseIpcFlag = getFlag(flags, WalletNodeUseIpcFlagKey)
+    if (typeof walletNodeUseIpcFlag === 'boolean') {
+      configOverrides.walletNodeIpcEnabled = walletNodeUseIpcFlag
+    }
+
+    const walletNodeIpcPathFlag = getFlag(flags, WalletNodeIpcPathFlagKey)
+    if (typeof walletNodeIpcPathFlag === 'string') {
+      configOverrides.walletNodeIpcPath = walletNodeIpcPathFlag
+    }
+
+    const walletNodeUseTcpFlag = getFlag(flags, WalletNodeUseTcpFlagKey)
+    if (typeof walletNodeUseTcpFlag === 'boolean') {
+      configOverrides.walletNodeTcpEnabled = walletNodeUseTcpFlag
+    }
+
+    const walletNodeTcpHostFlag = getFlag(flags, WalletNodeTcpHostFlagKey)
+    if (typeof walletNodeTcpHostFlag === 'string') {
+      configOverrides.walletNodeTcpHost = walletNodeTcpHostFlag
+    }
+
+    const walletNodeTcpPortFlag = getFlag(flags, WalletNodeTcpPortFlagKey)
+    if (typeof walletNodeTcpPortFlag === 'number') {
+      configOverrides.walletNodeTcpPort = walletNodeTcpPortFlag
+    }
+
+    const walletNodeTcpTlsFlag = getFlag(flags, WalletNodeTcpTlsFlagKey)
+    if (typeof walletNodeTcpTlsFlag === 'boolean') {
+      configOverrides.walletNodeTlsEnabled = walletNodeTcpTlsFlag
+    }
+
+    const walletNodeAuthFlag = getFlag(flags, WalletNodeAuthFlagKey)
+    if (typeof walletNodeAuthFlag === 'string') {
+      configOverrides.walletNodeRpcAuthToken = walletNodeAuthFlag
     }
 
     this.sdk = await IronfishSdk.init({

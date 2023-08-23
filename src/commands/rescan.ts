@@ -5,7 +5,7 @@
 import { Meter, TimeUtils } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { RemoteFlags } from '../flags'
+import { RemoteFlags, WalletRemoteFlags } from '../flags'
 import { ProgressBar } from '../types'
 import { hasUserResponseError } from '../utils'
 import { connectRpcWallet } from '../utils/clients'
@@ -15,6 +15,7 @@ export class RescanCommand extends IronfishCommand {
 
   static flags = {
     ...RemoteFlags,
+    ...WalletRemoteFlags,
     follow: Flags.boolean({
       char: 'f',
       default: true,
