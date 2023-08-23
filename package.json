@@ -1,5 +1,5 @@
 {
-  "name": "ironfish-wallet-cli",
+  "name": "ironfish-wallet",
   "version": "0.1.0",
   "description": "CLI for running a standalone wallet",
   "author": "Iron Fish <contact@ironfish.network> (https://ironfish.network)",
