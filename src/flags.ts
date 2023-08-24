@@ -144,33 +144,33 @@ export const WalletNodeAuthFlagKey = 'node.auth'
 
 export const WalletNodeUseIpcFlag = Flags.boolean({
   allowNo: true,
-  description: 'Connect to the node client using IPC',
+  description: 'Connect to the wallet node client using IPC',
 })
 
 export const WalletNodeIpcPathFlag = Flags.string({
-  description: 'The IPC path of the node client',
+  description: 'The IPC path of the wallet node client',
 })
 
 export const WalletNodeUseTcpFlag = Flags.boolean({
   allowNo: true,
-  description: 'Connect to the node client using TCP',
+  description: 'Connect to the wallet node client using TCP',
 })
 
 export const WalletNodeTcpHostFlag = Flags.string({
-  description: 'The TCP host of the node client',
+  description: 'The TCP host of the wallet node client',
 })
 
 export const WalletNodeTcpPortFlag = Flags.integer({
-  description: 'The TCP port of the node client',
+  description: 'The TCP port of the wallet node client',
 })
 
 export const WalletNodeTcpTlsFlag = Flags.boolean({
   allowNo: true,
-  description: 'Connect to the node client using TLS',
+  description: 'Connect to the wallet node client using TLS',
 })
 
 export const WalletNodeAuthFlag = Flags.string({
-  description: 'The RPC authorization token for the node client',
+  description: 'The RPC authorization token for the wallet node client',
 })
 
 export const WalletRemoteFlags: Record<string, CompletableOptionFlag> = {
