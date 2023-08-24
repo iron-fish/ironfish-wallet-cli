@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
+import { RemoteFlags, WalletRemoteFlags } from '../../flags'
 import { connectRpcWallet } from '../../utils/clients'
 
 export class TransactionAddCommand extends IronfishCommand {
@@ -11,6 +11,7 @@ export class TransactionAddCommand extends IronfishCommand {
 
   static flags = {
     ...RemoteFlags,
+    ...WalletRemoteFlags,
     broadcast: Flags.boolean({
       default: true,
       allowNo: true,

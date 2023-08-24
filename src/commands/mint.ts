@@ -11,7 +11,7 @@ import {
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { IronFlag, RemoteFlags } from '../flags'
+import { IronFlag, RemoteFlags, WalletRemoteFlags } from '../flags'
 import { selectAsset } from '../utils/asset'
 import { connectRpcWallet } from '../utils/clients'
 import { promptCurrency } from '../utils/currency'
@@ -30,6 +30,7 @@ export class Mint extends IronfishCommand {
 
   static flags = {
     ...RemoteFlags,
+    ...WalletRemoteFlags,
     account: Flags.string({
       char: 'f',
       description: 'The account to mint from',
