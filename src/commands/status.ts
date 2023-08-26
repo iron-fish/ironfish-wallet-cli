@@ -64,11 +64,16 @@ export class StatusCommand extends IronfishCommand {
         account: account,
       })
 
+      const table = {
+        body: '',
+      }
+
       const logTable = (s: string) => {
-        statusText.insertBottom(s)
+        table.body += s
       }
 
       this.renderStatus(response, flags, logTable)
+      statusText.setContent(table.body)
 
       screen.render()
       await PromiseUtils.sleep(1000)
