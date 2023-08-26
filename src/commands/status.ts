@@ -51,29 +51,50 @@ export class StatusCommand extends IronfishCommand {
     const statusText = blessed.text()
     screen.append(statusText)
 
+    let previousResponse = ''
+
     while (true) {
+      const connected = await this.sdk.client.tryConnect()
+
+      if (!connected) {
+        statusText.clearBaseLine(0)
+
+        if (previousResponse) {
+          statusText.setContent(previousResponse)
+
+          statusText.insertTop('Node: Disconnected \n')
+        } else {
+          statusText.setContent('Node: STOPPED')
+        }
+
+        screen.render()
+        await PromiseUtils.sleep(1000)
+        continue
+      }
+
       statusText.clearBaseLine(0)
 
       const client = await connectRpcWallet(this.sdk)
-
-      await client.wallet.getAccountsStatus({
-        account: account,
-      })
 
       const response = await client.wallet.getAccountsStatus({
         account: account,
       })
 
-      const table = {
+      // This is a workaround to display the CliUX.Table output in Blessed.
+      // CliUX.Table does not return a string and instead prints to a custom function
+
+      const tableOutput = {
         body: '',
       }
 
       const logTable = (s: string) => {
-        table.body += s
+        tableOutput.body += s
       }
 
       this.renderStatus(response, flags, logTable)
-      statusText.setContent(table.body)
+
+      statusText.setContent(tableOutput.body)
+      previousResponse = tableOutput.body
 
       screen.render()
       await PromiseUtils.sleep(1000)
