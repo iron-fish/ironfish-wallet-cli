@@ -80,21 +80,20 @@ export class StatusCommand extends IronfishCommand {
         account: account,
       })
 
+      let tableBody = ''
+
       // This is a workaround to display the CliUX.Table output in Blessed.
       // CliUX.Table does not return a string and instead prints to a custom function
 
-      const tableOutput = {
-        body: '',
-      }
-
       const logTable = (s: string) => {
-        tableOutput.body += s
+        tableBody += s
       }
 
       this.renderStatus(response, flags, logTable)
 
-      statusText.setContent(tableOutput.body)
-      previousResponse = tableOutput.body
+      statusText.setContent(tableBody)
+
+      previousResponse = tableBody
 
       screen.render()
       await PromiseUtils.sleep(1000)
