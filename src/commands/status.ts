@@ -126,7 +126,7 @@ export class StatusCommand extends IronfishCommand {
         },
       },
       {
-        printLine: printLine,
+        printLine,
         ...flags,
       },
     )
