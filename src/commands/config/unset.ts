@@ -26,7 +26,7 @@ export class UnsetCommand extends IronfishCommand {
     }),
   }
 
-  static examples = ['$ ironfish config:unset blockGraffiti']
+  static examples = ['$ ironfishw config:unset walletNodeIpcPath']
 
   async start(): Promise<void> {
     const { args, flags } = await this.parse(UnsetCommand)

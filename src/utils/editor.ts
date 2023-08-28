@@ -16,7 +16,7 @@ export function launchEditor(
 
   if (!editor) {
     throw new Error(
-      `you must set the EDITOR environment variable or 'editor' in the ironfish config`,
+      `you must set the EDITOR environment variable or 'editor' in the ironfishw config`,
     )
   }
 

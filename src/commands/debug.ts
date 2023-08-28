@@ -65,14 +65,13 @@ export default class Debug extends IronfishCommand {
       getHeapStatistics().total_available_size,
     )
 
-    const telemetryEnabled = this.sdk.config.get('enableTelemetry').toString()
     const assetVerificationEnabled = this.sdk.config
       .get('enableAssetVerification')
       .toString()
 
     let cmdInPath: boolean
     try {
-      execSync('ironfish --help', { stdio: 'ignore' })
+      execSync('ironfishw --help', { stdio: 'ignore' })
       cmdInPath = true
     } catch {
       cmdInPath = false
@@ -87,9 +86,8 @@ export default class Debug extends IronfishCommand {
       ['RAM total', `${memTotal}`],
       ['Heap total', `${heapTotal}`],
       ['Node version', `${process.version}`],
-      ['ironfish in PATH', `${cmdInPath.toString()}`],
+      ['ironfishw in PATH', `${cmdInPath.toString()}`],
       ['Garbage Collector Exposed', `${String(!!global.gc)}`],
-      ['Telemetry enabled', `${telemetryEnabled}`],
       ['Asset Verification enabled', `${assetVerificationEnabled}`],
     ])
   }

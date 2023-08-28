@@ -33,7 +33,7 @@ export class SetCommand extends IronfishCommand {
   }
 
   static examples = [
-    '$ ironfish config:set bootstrapNodes "test.bn1.ironfish.network,example.com"',
+    '$ ironfishw config:set walletNodeIpcPath ~/.ironfish/ironfish.ipc',
   ]
 
   async start(): Promise<void> {
