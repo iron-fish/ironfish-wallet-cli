@@ -1,4 +1,4 @@
-name: Deploy ironfish NPM Package
+name: Deploy ironfish-wallet NPM Package
 
 env:
   DEBUG: 'napi:*'
