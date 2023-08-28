@@ -32,7 +32,6 @@ import {
 } from '../flags'
 import { ONE_FISH_IMAGE } from '../images'
 
-const ENABLE_TELEMETRY_CONFIG_KEY = 'enableTelemetry'
 const DEFAULT_ACCOUNT_NAME = 'default'
 
 export default class WalletStart extends IronfishCommand {
@@ -166,14 +165,6 @@ export default class WalletStart extends IronfishCommand {
   private async firstRun(node: IronfishNode): Promise<void> {
     this.log('')
     this.log('Thank you for installing the Iron Fish Wallet Node.')
-
-    if (!node.config.get(ENABLE_TELEMETRY_CONFIG_KEY)) {
-      this.log('')
-      this.log(
-        'To help improve Iron Fish, opt in to collecting telemetry by running',
-      )
-      this.log(` > ironfish config:set ${ENABLE_TELEMETRY_CONFIG_KEY} true`)
-    }
 
     if (!node.wallet.getDefaultAccount()) {
       await this.setDefaultAccount(node)
