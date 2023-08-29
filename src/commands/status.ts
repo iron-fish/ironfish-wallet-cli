@@ -86,7 +86,7 @@ export class StatusCommand extends IronfishCommand {
       // CliUX.Table does not return a string and instead prints to a custom function
 
       const logTable = (s: string) => {
-        tableBody += s
+        tableBody += s + '\n'
       }
 
       this.renderStatus(response, flags, logTable)
