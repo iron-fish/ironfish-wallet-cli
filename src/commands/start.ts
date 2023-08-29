@@ -125,6 +125,79 @@ export default class WalletStart extends IronfishCommand {
       this.sdk.config.setOverride('customNetwork', customNetwork)
     }
 
+    let validNodeClientConfig = false
+
+    if (this.sdk.config.get('walletNodeTcpEnabled')) {
+      if (this.sdk.config.get('walletNodeTlsEnabled')) {
+        validNodeClientConfig =
+          !!this.sdk.config.get('walletNodeTcpHost') &&
+          !!this.sdk.config.get('walletNodeTcpPort') &&
+          !!this.sdk.config.get('walletNodeRpcAuthToken')
+      } else {
+        validNodeClientConfig =
+          !!this.sdk.config.get('walletNodeTcpHost') &&
+          !!this.sdk.config.get('walletNodeTcpPort')
+      }
+    } else if (this.sdk.config.get('walletNodeIpcEnabled')) {
+      validNodeClientConfig = !!this.sdk.config.get('walletNodeIpcPath')
+    }
+
+    if (!validNodeClientConfig) {
+      throw new Error(`Cannot start the wallet: no node connection configuration specified.
+
+Use 'ironfishw config:set' to connect to a node via TCP, TLS, or IPC.
+
+Examples:
+
+1) To connect to a node using IPC:
+
+  # Enable node IPC connection
+  $ ironfishw config:set walletNodeIpcEnabled true
+
+  # Set node IPC path
+  $ ironfishw config:set walletNodeIpcPath ~/.ironfish/ironfish.ipc
+
+  ----------
+
+  # Alternatively, start the wallet using CLI flags
+  $ ironfishw start --node.ipc --node.ipc.path=~/.ironfish/ironfish.ipc
+
+2) To connect to a node using TCP:
+
+  # Enable node IPC connection
+  $ ironfishw config:set walletNodeTcpEnabled true
+
+  # Set node TCP Host
+  $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
+
+  # Set node TCP Port
+  $ ironfishw config:set walletNodeTcpPort 19957
+  
+  ----------
+
+  # Alternatively, start the wallet using CLI flags
+  $ ironfishw start --node.tcp --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957
+
+3) To connect to a node using TLS:
+
+  # Enable node IPC connection
+  $ ironfishw config:set walletNodeTcpEnabled true
+
+  # Set node TCP Host
+  $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
+
+  # Set node TCP Port
+  $ ironfishw config:set walletNodeTcpPort 19957
+
+  # Set node authentication token
+  $ ironfishw config:set walletNodeRpcAuthToken supersecretvalue
+  
+  ----------
+
+  # Alternatively, start the wallet using CLI flags
+  $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957 --node.auth=supersecretvalue`)
+    }
+
     const node = await this.sdk.walletNode()
     const nodeName = this.sdk.config.get('nodeName').trim() || null
 
