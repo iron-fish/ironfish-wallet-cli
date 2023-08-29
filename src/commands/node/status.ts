@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
+  Assert,
   defaultNetworkName,
   FileUtils,
   GetNodeStatusResponse,
   PromiseUtils,
   TimeUtils,
 } from '@ironfish/sdk'
-import { Assert } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import blessed from 'blessed'
 import { IronfishCommand } from '../../command'
@@ -35,6 +35,11 @@ export default class Status extends IronfishCommand {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
+      const connected = await this.sdk.client.tryConnect()
+      if (!connected) {
+        this.log('Node: Disconnected')
+        this.exit(0)
+      }
       const client = await connectRpcWallet(this.sdk)
       const response = await client.wallet.getNodeStatus()
       this.log(renderStatus(response.content, flags.all))
@@ -88,9 +93,9 @@ function renderStatus(
   let blockSyncerStatus = content.blockSyncer.status.toString().toUpperCase()
   const blockSyncerStatusDetails: string[] = []
   let telemetryStatus = `${content.telemetry.status.toUpperCase()}`
-
+  console.log('checking this')
   Assert.isNotUndefined(content.blockSyncer.syncing)
-
+  console.log('passed this')
   const avgTimeToAddBlock = content.blockSyncer.syncing.blockSpeed
 
   if (content.blockSyncer.status === 'syncing') {
