@@ -161,7 +161,7 @@ Examples:
   ----------
 
   # Alternatively, start the wallet using CLI flags
-  $ ironfishw start --node.ipc --node.ipc.path=~/.ironfish/ironfish.ipc
+  $ ironfishw start --node.ipc --node.ipc.path ~/.ironfish/ironfish.ipc
 
 2) To connect to a node using TCP:
 
