@@ -35,13 +35,7 @@ export default class Status extends IronfishCommand {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
-      const connected = await this.sdk.client.tryConnect()
-      if (!connected) {
-        this.log('Node: Disconnected')
-        this.exit(0)
-      }
-
-      const client = await connectRpcWallet(this.sdk)
+      const client = await connectRpcWallet(this.sdk, { forceRemote: true })
       const response = await client.wallet.getNodeStatus()
       this.log(renderStatus(response.content, flags.all))
       this.exit(0)
