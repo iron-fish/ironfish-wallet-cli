@@ -143,7 +143,8 @@ export default class WalletStart extends IronfishCommand {
     }
 
     if (!validNodeClientConfig) {
-      throw new Error(`Cannot start the wallet: no node connection configuration specified.
+      this
+        .log(`Cannot start the wallet: no node connection configuration specified.
 
 Use 'ironfishw config:set' to connect to a node via TCP, TLS, or IPC.
 
@@ -196,6 +197,7 @@ Examples:
 
   # Alternatively, start the wallet using CLI flags
   $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957 --node.auth=supersecretvalue`)
+      this.exit(1)
     }
 
     const node = await this.sdk.walletNode()
