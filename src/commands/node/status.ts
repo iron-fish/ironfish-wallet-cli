@@ -2,13 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
+  Assert,
   defaultNetworkName,
   FileUtils,
   GetNodeStatusResponse,
   PromiseUtils,
   TimeUtils,
 } from '@ironfish/sdk'
-import { Assert } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import blessed from 'blessed'
 import { IronfishCommand } from '../../command'
@@ -35,7 +35,7 @@ export default class Status extends IronfishCommand {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
-      const client = await connectRpcWallet(this.sdk)
+      const client = await connectRpcWallet(this.sdk, { forceRemote: true })
       const response = await client.wallet.getNodeStatus()
       this.log(renderStatus(response.content, flags.all))
       this.exit(0)
