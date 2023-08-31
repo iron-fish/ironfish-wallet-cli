@@ -84,6 +84,7 @@ export class TransactionsCommand extends IronfishCommand {
     const columns = this.getColumns(flags.extended, flags.notes, format)
 
     let showHeader = !flags['no-header']
+    let hasTransactions = false
 
     for await (const transaction of response.contentStream()) {
       const transactionRows = flags.notes
@@ -97,6 +98,11 @@ export class TransactionsCommand extends IronfishCommand {
       })
 
       showHeader = false
+      hasTransactions = true
+    }
+
+    if (!hasTransactions) {
+      this.log('No transactions found')
     }
   }
 
