@@ -52,16 +52,16 @@
     "oclif:version": "oclif readme && git add README.md"
   },
   "dependencies": {
-    "@ironfish/rust-nodejs": "1.7.0",
-    "@ironfish/sdk": "1.8.0",
+    "@ironfish/rust-nodejs": "1.8.0",
+    "@ironfish/sdk": "1.9.0",
     "@oclif/core": "1.23.1",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-not-found": "2.3.1",
     "@oclif/plugin-warn-if-update-available": "2.0.40",
     "@types/inquirer": "9.0.3",
-    "inquirer": "8.2.5",
     "blessed": "0.1.81",
     "cross-env": "7.0.3",
+    "inquirer": "8.2.5",
     "json-colorizer": "2.2.2",
     "supports-hyperlinks": "2.2.0"
   },
