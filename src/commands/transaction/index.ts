@@ -110,7 +110,7 @@ export class TransactionCommand extends IronfishCommand {
       })
     }
 
-    if (response.content.transaction.spendsCount > 0) {
+    if (response.content.transaction.spends.length > 0) {
       this.log(`\n---Spends---\n`)
       CliUx.ux.table(response.content.transaction.spends, {
         size: {
