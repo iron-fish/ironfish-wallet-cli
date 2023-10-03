@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { BufferUtils, CurrencyUtils, TimeUtils } from '@ironfish/sdk'
+import { Assert, BufferUtils, CurrencyUtils, TimeUtils } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../../command'
 import { RemoteFlags } from '../../flags'
@@ -39,12 +39,18 @@ export class TransactionCommand extends IronfishCommand {
     const response = await client.wallet.getAccountTransaction({
       account,
       hash,
+      notes: true,
+      spends: true,
     })
 
     if (!response.content.transaction) {
       this.log(`No transaction found by hash ${hash}`)
       return
     }
+
+    // by default the notes and spends should be returned
+    Assert.isNotUndefined(response.content.transaction.notes)
+    Assert.isNotUndefined(response.content.transaction.spends)
 
     this.log(`Transaction: ${hash}`)
     this.log(`Account: ${response.content.account}`)
@@ -68,10 +74,10 @@ export class TransactionCommand extends IronfishCommand {
       this.log(`Block Hash: ${response.content.transaction.blockHash}`)
       this.log(`Block Sequence: ${response.content.transaction.blockSequence}`)
     }
-    this.log(`Notes Count: ${response.content.transaction.notesCount}`)
-    this.log(`Spends Count: ${response.content.transaction.spendsCount}`)
-    this.log(`Mints Count: ${response.content.transaction.mintsCount}`)
-    this.log(`Burns Count: ${response.content.transaction.burnsCount}`)
+    this.log(`Notes Count: ${response.content.transaction.notes.length}`)
+    this.log(`Spends Count: ${response.content.transaction.spends.length}`)
+    this.log(`Mints Count: ${response.content.transaction.mints.length}`)
+    this.log(`Burns Count: ${response.content.transaction.burns.length}`)
     this.log(`Sender: ${response.content.transaction.notes[0].sender}`)
 
     if (response.content.transaction.notes.length > 0) {

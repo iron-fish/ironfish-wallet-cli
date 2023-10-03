@@ -23,6 +23,7 @@ module.exports = {
     'header',
     'jest',
     'simple-import-sort',
+    'deprecation',
   ],
   ignorePatterns: [
     '.*',
@@ -74,5 +75,6 @@ module.exports = {
         groups: [['\\u0000', '^@?\\w', '^', '\\.']],
       },
     ],
+    'deprecation/deprecation': 'off', // enable this to warn or error to show deprecated code usage
   },
 }
