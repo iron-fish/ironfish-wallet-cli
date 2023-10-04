@@ -4,12 +4,13 @@
 
 import { Asset } from '@ironfish/rust-nodejs'
 import {
+  AssetVerification,
   BufferUtils,
   CurrencyUtils,
+  RpcAsset,
   RpcClient,
   StringUtils,
 } from '@ironfish/sdk'
-import { AssetVerification } from '@ironfish/sdk'
 import chalk from 'chalk'
 import inquirer from 'inquirer'
 
@@ -101,6 +102,11 @@ export async function selectAsset(
 
   let balances = balancesResponse.content.balances
 
+  const assetLookup = await getAssetsByIDs(
+    client,
+    balances.map((b) => b.assetId),
+  )
+
   if (!options.showNativeAsset) {
     balances = balances.filter(
       (b) => b.assetId !== Asset.nativeId().toString('hex'),
@@ -113,7 +119,8 @@ export async function selectAsset(
     })
 
     balances = balances.filter(
-      (b) => b.assetCreator === accountResponse.content.publicKey,
+      (b) =>
+        assetLookup[b.assetId].creator === accountResponse.content.publicKey,
     )
   }
 
@@ -125,19 +132,21 @@ export async function selectAsset(
     // If there's only one available asset, showing the choices is unnecessary
     return {
       id: balances[0].assetId,
-      name: balances[0].assetName,
+      name: assetLookup[balances[0].assetId].name,
     }
   }
 
   const choices = balances.map((balance) => {
-    const assetName = BufferUtils.toHuman(Buffer.from(balance.assetName, 'hex'))
+    const assetName = BufferUtils.toHuman(
+      Buffer.from(assetLookup[balance.assetId].name, 'hex'),
+    )
     const name = `${balance.assetId} (${assetName}) (${CurrencyUtils.renderIron(
       balance.available,
     )})`
 
     const value = {
       id: balance.assetId,
-      name: balance.assetName,
+      name: assetLookup[balance.assetId].name,
     }
 
     return { value, name }
@@ -158,4 +167,19 @@ export async function selectAsset(
   ])
 
   return response.asset
+}
+
+export async function getAssetsByIDs(
+  client: Pick<RpcClient, 'wallet'>,
+  assetIds: string[],
+): Promise<{ [key: string]: RpcAsset }> {
+  assetIds = [...new Set(assetIds)]
+  const assets = await Promise.all(
+    assetIds.map((id) => client.wallet.getAsset({ id })),
+  )
+  const assetLookup: { [key: string]: RpcAsset } = {}
+  assets.forEach((asset) => {
+    assetLookup[asset.content.id] = asset.content
+  })
+  return assetLookup
 }

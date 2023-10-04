@@ -32,6 +32,7 @@
     "eslint-plugin-jest": "27.2.3",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-simple-import-sort": "10.0.0",
+    "eslint-plugin-deprecation": "2.0.0",
     "jest": "29.3.1",
     "jest-jasmine2": "29.3.1",
     "oclif": "2.6.0",
@@ -43,6 +44,7 @@
     "build": "tsc -b",
     "lint": "tsc -b && eslint --ext .ts,.tsx,.js,.jsx src/",
     "lint:fix": "tsc -b && eslint --ext .ts,.tsx,.js,.jsx src/ --fix",
+    "lint:deprecated": "yarn lint --rule \"deprecation/deprecation: warn\"",
     "start:dev": "node start",
     "start": "yarn build && yarn start:js",
     "start:js": "cross-env OCLIF_TS_NODE=0 IRONFISH_DEBUG=1 node --expose-gc --inspect=:0 --inspect-publish-uid=http --enable-source-maps bin/run",
@@ -52,8 +54,8 @@
     "oclif:version": "oclif readme && git add README.md"
   },
   "dependencies": {
-    "@ironfish/rust-nodejs": "1.8.0",
-    "@ironfish/sdk": "1.9.0",
+    "@ironfish/rust-nodejs": "1.9.0",
+    "@ironfish/sdk": "1.10.0",
     "@oclif/core": "1.23.1",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-not-found": "2.3.1",

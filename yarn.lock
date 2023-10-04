@@ -316,7 +316,7 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@eslint-community/eslint-utils@^4.2.0":
+"@eslint-community/eslint-utils@^4.2.0", "@eslint-community/eslint-utils@^4.4.0":
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/@eslint-community/eslint-utils/-/eslint-utils-4.4.0.tgz#a23514e8fb9af1269d5f7788aa556798d61c6b59"
   integrity sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==
@@ -405,62 +405,62 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@ironfish/rust-nodejs-darwin-arm64@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-arm64/-/rust-nodejs-darwin-arm64-1.8.0.tgz#28e150f7ad51dd6b66fcf995c8476eff62828b0c"
-  integrity sha512-L4hgcIZ25azTQ5WPC4T8rDMh3wu8FZtpPiCD7WRIWbAemE9iKeivQcuBkaFcGd5Bz2B6D4gs01WgCCw+nq3r5w==
-
-"@ironfish/rust-nodejs-darwin-x64@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-x64/-/rust-nodejs-darwin-x64-1.8.0.tgz#7beffda4874fa3d07a45f674f55f3c1e421e8bef"
-  integrity sha512-hqBznqDeSsbZmZZXXvZLq95K/r9xDXVNrlNPqvDKEzcn9kBfC54TXHYiseClV5aJA05o2G7gOWZKTiC10G9YhQ==
-
-"@ironfish/rust-nodejs-linux-arm64-gnu@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-gnu/-/rust-nodejs-linux-arm64-gnu-1.8.0.tgz#cd414b6a9b9457da824b2a766d01373b59465a14"
-  integrity sha512-Y9EAVkXhVwQWhs7WLO0qlIfJtURWNOfvPrzMfXFl5azgQM7qwsTqDIGb1vabLVxhppx+WK70NheTWwYYZ2or9g==
-
-"@ironfish/rust-nodejs-linux-arm64-musl@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-musl/-/rust-nodejs-linux-arm64-musl-1.8.0.tgz#ed1454ef6ff51543518011474dedfd0e439a59fb"
-  integrity sha512-AgrjQA3Rp0ME4CmK8JEqybaiFX+fuyYcIqfE+ZJLOpAtk1J1N0TbfW3x1uJ45UsPNaDvjpi+qyeeWXPhp+yVUA==
-
-"@ironfish/rust-nodejs-linux-x64-gnu@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-gnu/-/rust-nodejs-linux-x64-gnu-1.8.0.tgz#3329795f73ab29e580106279f4bd84981770f444"
-  integrity sha512-0MPRhAJ1BmyV/6KcY8ycGTN7AthPN2ieUFp3ggtg/NBcAPZ+3DGMLtgBsKmqvlbTdOW9HVMQBJn3orEo8bPSRQ==
-
-"@ironfish/rust-nodejs-linux-x64-musl@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-musl/-/rust-nodejs-linux-x64-musl-1.8.0.tgz#8707c5e128604598627c7e6e9e9ad488ee28b390"
-  integrity sha512-f6lTNU0MCC3ORkM6aGcE4jmjiFH0UEPLZpKv55dWkXlIE8iFDkbzIPzTWpY8iFgJeaG4m6zRvk99oajYGjUQtg==
-
-"@ironfish/rust-nodejs-win32-x64-msvc@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-win32-x64-msvc/-/rust-nodejs-win32-x64-msvc-1.8.0.tgz#956e96c3bca88de104fe4d5f315f5b4eaa3d6545"
-  integrity sha512-zyMf4iJr+6Z917PQxLsrA9FOpVrnpaVCZLRVgU6ag4BfU+9vUQElx9f4OSXuzV3M7EHKe73A3ql2UHaqzZCQLQ==
-
-"@ironfish/rust-nodejs@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs/-/rust-nodejs-1.8.0.tgz#d03d4e92dc1b4d14e8fe49fdeacf78eac5d16b24"
-  integrity sha512-HkCZiuzPpJP4MnWIXfdIjK0DCepuDngoPLECVR9LjFHNMRtT4Z+xrGJeah+j8ME0bMBM/q0675GsgjiiPnz5FA==
-  optionalDependencies:
-    "@ironfish/rust-nodejs-darwin-arm64" "1.8.0"
-    "@ironfish/rust-nodejs-darwin-x64" "1.8.0"
-    "@ironfish/rust-nodejs-linux-arm64-gnu" "1.8.0"
-    "@ironfish/rust-nodejs-linux-arm64-musl" "1.8.0"
-    "@ironfish/rust-nodejs-linux-x64-gnu" "1.8.0"
-    "@ironfish/rust-nodejs-linux-x64-musl" "1.8.0"
-    "@ironfish/rust-nodejs-win32-x64-msvc" "1.8.0"
-
-"@ironfish/sdk@1.9.0":
+"@ironfish/rust-nodejs-darwin-arm64@1.9.0":
   version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/sdk/-/sdk-1.9.0.tgz#a6a0a6ecbff406be7b0e3053d0707280d88b26ee"
-  integrity sha512-Os29rWsehLRO359zPu/5KT6n2uL5pvp1n2ri/sZgGMXklh9j4zqPWcoV1OKDDUYiPLMsQ+b9fkTdiGRXQa6RAw==
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-arm64/-/rust-nodejs-darwin-arm64-1.9.0.tgz#61aae2b495367684af369ee6a83a987f87e3d491"
+  integrity sha512-kiwyFZB8jsLeTZIqLFLOcIAgSaybshzdCjnHIRnief5Z0EJkPLt5Ux0k8WcsoKQumST/T9dXyytjnVZyBllcFg==
+
+"@ironfish/rust-nodejs-darwin-x64@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-x64/-/rust-nodejs-darwin-x64-1.9.0.tgz#c42f649c7cf6515ef2cc04bc00cee8b3095ef430"
+  integrity sha512-sQe2WMyMSnQNd0GdNfXIQyyzSWtQKVZC7CPmQOeg2a96RScHtwOmPX6hYk6gjs1NIFFXkN+ngRf0iHySBtmDyA==
+
+"@ironfish/rust-nodejs-linux-arm64-gnu@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-gnu/-/rust-nodejs-linux-arm64-gnu-1.9.0.tgz#4cf062fd3a0539282451775b4537de90f22c7571"
+  integrity sha512-GZAydmLgtvmdKqLrP10/3c8AOY3vz4/x8xDFX2iRms7KZ4U+R5tWME/wPfXdg0c24GKlKtKBa9e8hB+oH1xQWA==
+
+"@ironfish/rust-nodejs-linux-arm64-musl@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-musl/-/rust-nodejs-linux-arm64-musl-1.9.0.tgz#7e58244922892803e71a56b1c88fb8e84b76ab82"
+  integrity sha512-zvTnIXMQK6LzQY4U7NwpPfbr5WbzLSVBV4ZuY6cn/YmSmeDV6ioTs4CQ9AGJNMG4COhkoGVYL4mAcYqd6j6ypw==
+
+"@ironfish/rust-nodejs-linux-x64-gnu@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-gnu/-/rust-nodejs-linux-x64-gnu-1.9.0.tgz#e4f9bf36af16e56743275236cfe40e1956eb6d9a"
+  integrity sha512-YtEKVc4vU7yLJjUnoRoxOTRN64ipqjzJ2jiewzmTGI1ECx5Fz4YJgn7yHZ90km5CYPGD/pyb3v0dfxrNNeOEjg==
+
+"@ironfish/rust-nodejs-linux-x64-musl@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-musl/-/rust-nodejs-linux-x64-musl-1.9.0.tgz#ae6de60eb0a1abd2e57b001429e5e13bdc193de7"
+  integrity sha512-z91XjHFoiw8tljtIhJIMLSa1uu61x7Xl37jO7ZxzaOaydD3ufor2GvlSZTC9MFClE3eYfN6ik8mMf7oufs5o0A==
+
+"@ironfish/rust-nodejs-win32-x64-msvc@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-win32-x64-msvc/-/rust-nodejs-win32-x64-msvc-1.9.0.tgz#0ed9115909ec17b549f52f82100d00328b04f135"
+  integrity sha512-0xCWJAZjRpJlqzVsrFZ670iaZkSlv0HLPorMwhUZbJu/7pYabfU2SPhxon0R/jJ7jHkCAdOvmQ9/SYbZ0UbpzQ==
+
+"@ironfish/rust-nodejs@1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs/-/rust-nodejs-1.9.0.tgz#1cfd2b5e630a485c7239f33f5f8545c1dd6825d2"
+  integrity sha512-ZAEzxZ2uFfGVs3bxQ4UAXGROMhr6GSSemH7Ab/SCyDh54fAs9Iu77/IiYPgPS7XfnNLxUix273O8TRTIMoS88g==
+  optionalDependencies:
+    "@ironfish/rust-nodejs-darwin-arm64" "1.9.0"
+    "@ironfish/rust-nodejs-darwin-x64" "1.9.0"
+    "@ironfish/rust-nodejs-linux-arm64-gnu" "1.9.0"
+    "@ironfish/rust-nodejs-linux-arm64-musl" "1.9.0"
+    "@ironfish/rust-nodejs-linux-x64-gnu" "1.9.0"
+    "@ironfish/rust-nodejs-linux-x64-musl" "1.9.0"
+    "@ironfish/rust-nodejs-win32-x64-msvc" "1.9.0"
+
+"@ironfish/sdk@1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/sdk/-/sdk-1.10.0.tgz#615f9ad5a07a1952e2ac62de3ea5dc0b9a701743"
+  integrity sha512-xI1/kfDKwXX3wJuKtpx5UlbpXTvATMM6P8sPhdnyKYW1FMAiOzLcv5lj6ZC09ip8zwBdfL6/bZJjWiDAh1JEhw==
   dependencies:
     "@ethersproject/bignumber" "5.7.0"
     "@fast-csv/format" "4.3.5"
-    "@ironfish/rust-nodejs" "1.8.0"
+    "@ironfish/rust-nodejs" "1.9.0"
     "@napi-rs/blake-hash" "1.3.3"
     axios "0.21.4"
     bech32 "2.0.0"
@@ -472,6 +472,7 @@
     colors "1.4.0"
     consola "2.15.0"
     date-fns "2.16.1"
+    decimal.js "10.4.3"
     fastpriorityqueue "0.7.1"
     imurmurhash "0.1.4"
     level-errors "2.0.1"
@@ -1533,6 +1534,11 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
+"@types/json-schema@^7.0.12":
+  version "7.0.13"
+  resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.13.tgz#02c24f4363176d2d18fc8b70b9f3c54aba178a85"
+  integrity sha512-RbSSoHliUbnXj3ny0CNFOoxrIDV6SUGyStHsvDqosw6CkdPV8TtWGlfecuK4ToyMEAql6pzNxgCFKanovUzlgQ==
+
 "@types/json-schema@^7.0.9":
   version "7.0.12"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.12.tgz#d70faba7039d5fca54c83c7dbab41051d2b6f6cb"
@@ -1577,6 +1583,11 @@
   version "7.5.0"
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.0.tgz#591c1ce3a702c45ee15f47a42ade72c2fd78978a"
   integrity sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==
+
+"@types/semver@^7.5.0":
+  version "7.5.3"
+  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.3.tgz#9a726e116beb26c24f1ccd6850201e1246122e04"
+  integrity sha512-OxepLK9EuNEIPxWNME+C6WwbRAOOI2o2BaQEGzz5Lu2e4Z5eDnEo+/aVEDMIXywoJitJ7xWd641wrGLZdtwRyw==
 
 "@types/stack-utils@^2.0.0":
   version "2.0.1"
@@ -1644,6 +1655,14 @@
     "@typescript-eslint/types" "5.62.0"
     "@typescript-eslint/visitor-keys" "5.62.0"
 
+"@typescript-eslint/scope-manager@6.7.4":
+  version "6.7.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/scope-manager/-/scope-manager-6.7.4.tgz#a484a17aa219e96044db40813429eb7214d7b386"
+  integrity sha512-SdGqSLUPTXAXi7c3Ob7peAGVnmMoGzZ361VswK2Mqf8UOYcODiYvs8rs5ILqEdfvX1lE7wEZbLyELCW+Yrql1A==
+  dependencies:
+    "@typescript-eslint/types" "6.7.4"
+    "@typescript-eslint/visitor-keys" "6.7.4"
+
 "@typescript-eslint/type-utils@5.62.0":
   version "5.62.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/type-utils/-/type-utils-5.62.0.tgz#286f0389c41681376cdad96b309cedd17d70346a"
@@ -1659,6 +1678,11 @@
   resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-5.62.0.tgz#258607e60effa309f067608931c3df6fed41fd2f"
   integrity sha512-87NVngcbVXUahrRTqIK27gD2t5Cu1yuCXxbLcFtCzZGlfyVWWh8mLHkoxzjsB6DDNnvdL+fW8MiwPEJyGJQDgQ==
 
+"@typescript-eslint/types@6.7.4":
+  version "6.7.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/types/-/types-6.7.4.tgz#5d358484d2be986980c039de68e9f1eb62ea7897"
+  integrity sha512-o9XWK2FLW6eSS/0r/tgjAGsYasLAnOWg7hvZ/dGYSSNjCh+49k5ocPN8OmG5aZcSJ8pclSOyVKP2x03Sj+RrCA==
+
 "@typescript-eslint/typescript-estree@5.62.0":
   version "5.62.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/typescript-estree/-/typescript-estree-5.62.0.tgz#7d17794b77fabcac615d6a48fb143330d962eb9b"
@@ -1671,6 +1695,19 @@
     is-glob "^4.0.3"
     semver "^7.3.7"
     tsutils "^3.21.0"
+
+"@typescript-eslint/typescript-estree@6.7.4":
+  version "6.7.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/typescript-estree/-/typescript-estree-6.7.4.tgz#f2baece09f7bb1df9296e32638b2e1130014ef1a"
+  integrity sha512-ty8b5qHKatlNYd9vmpHooQz3Vki3gG+3PchmtsA4TgrZBKWHNjWfkQid7K7xQogBqqc7/BhGazxMD5vr6Ha+iQ==
+  dependencies:
+    "@typescript-eslint/types" "6.7.4"
+    "@typescript-eslint/visitor-keys" "6.7.4"
+    debug "^4.3.4"
+    globby "^11.1.0"
+    is-glob "^4.0.3"
+    semver "^7.5.4"
+    ts-api-utils "^1.0.1"
 
 "@typescript-eslint/utils@5.62.0", "@typescript-eslint/utils@^5.10.0":
   version "5.62.0"
@@ -1686,6 +1723,19 @@
     eslint-scope "^5.1.1"
     semver "^7.3.7"
 
+"@typescript-eslint/utils@^6.0.0":
+  version "6.7.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-6.7.4.tgz#2236f72b10e38277ee05ef06142522e1de470ff2"
+  integrity sha512-PRQAs+HUn85Qdk+khAxsVV+oULy3VkbH3hQ8hxLRJXWBEd7iI+GbQxH5SEUSH7kbEoTp6oT1bOwyga24ELALTA==
+  dependencies:
+    "@eslint-community/eslint-utils" "^4.4.0"
+    "@types/json-schema" "^7.0.12"
+    "@types/semver" "^7.5.0"
+    "@typescript-eslint/scope-manager" "6.7.4"
+    "@typescript-eslint/types" "6.7.4"
+    "@typescript-eslint/typescript-estree" "6.7.4"
+    semver "^7.5.4"
+
 "@typescript-eslint/visitor-keys@5.62.0":
   version "5.62.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-5.62.0.tgz#2174011917ce582875954ffe2f6912d5931e353e"
@@ -1693,6 +1743,14 @@
   dependencies:
     "@typescript-eslint/types" "5.62.0"
     eslint-visitor-keys "^3.3.0"
+
+"@typescript-eslint/visitor-keys@6.7.4":
+  version "6.7.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/visitor-keys/-/visitor-keys-6.7.4.tgz#80dfecf820fc67574012375859085f91a4dff043"
+  integrity sha512-pOW37DUhlTZbvph50x5zZCkFn3xzwkGtNoJHzIM3svpiSkJzwOYr/kVBaXmf+RAQiUDs1AHEZVNPg6UJCJpwRA==
+  dependencies:
+    "@typescript-eslint/types" "6.7.4"
+    eslint-visitor-keys "^3.4.1"
 
 abbrev@1, abbrev@^1.0.0:
   version "1.1.1"
@@ -2596,6 +2654,11 @@ debuglog@^1.0.1:
   resolved "https://registry.yarnpkg.com/debuglog/-/debuglog-1.0.1.tgz#aa24ffb9ac3df9a2351837cfb2d279360cd78492"
   integrity sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==
 
+decimal.js@10.4.3:
+  version "10.4.3"
+  resolved "https://registry.yarnpkg.com/decimal.js/-/decimal.js-10.4.3.tgz#1044092884d245d1b7f65725fa4ad4c6f781cc23"
+  integrity sha512-VBBaLc1MgL5XpzgIP7ny5Z6Nx3UrRkIViUkPUdtl9aya5amy3De1gsUUSB1g3+3sExYNjCAsAznmukyxCb1GRA==
+
 decompress-response@^6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/decompress-response/-/decompress-response-6.0.0.tgz#ca387612ddb7e104bd16d85aab00d5ecf09c66fc"
@@ -2799,6 +2862,15 @@ eslint-config-prettier@9.0.0:
   version "9.0.0"
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-9.0.0.tgz#eb25485946dd0c66cd216a46232dc05451518d1f"
   integrity sha512-IcJsTkJae2S35pRsRAwoCE+925rJJStOdkKnLVgtE+tEpqU0EVVM7OqrwxqgptKdX29NUwC82I5pXsGFIgSevw==
+
+eslint-plugin-deprecation@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-deprecation/-/eslint-plugin-deprecation-2.0.0.tgz#9804707a4c19f3a53615c6babc0ced3d429d69cf"
+  integrity sha512-OAm9Ohzbj11/ZFyICyR5N6LbOIvQMp7ZU2zI7Ej0jIc8kiGUERXPNMfw2QqqHD1ZHtjMub3yPZILovYEYucgoQ==
+  dependencies:
+    "@typescript-eslint/utils" "^6.0.0"
+    tslib "^2.3.1"
+    tsutils "^3.21.0"
 
 eslint-plugin-header@3.1.1:
   version "3.1.1"
@@ -6557,6 +6629,11 @@ treeverse@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/treeverse/-/treeverse-1.0.4.tgz#a6b0ebf98a1bca6846ddc7ecbc900df08cb9cd5f"
   integrity sha512-whw60l7r+8ZU8Tu/Uc2yxtc4ZTZbR/PF3u1IPNKGQ6p8EICLb3Z2lAgoqw9bqYd8IkgnsaOcLzYHFckjqNsf0g==
+
+ts-api-utils@^1.0.1:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/ts-api-utils/-/ts-api-utils-1.0.3.tgz#f12c1c781d04427313dbac808f453f050e54a331"
+  integrity sha512-wNMeqtMz5NtwpT/UZGY5alT+VoKdSsOOP/kqHFcUW1P/VRhH2wJ48+DN2WwUliNbQ976ETwDL0Ifd2VVvgonvg==
 
 ts-node@^10.9.1:
   version "10.9.1"
