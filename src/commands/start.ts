@@ -165,24 +165,26 @@ Examples:
 
 2) To connect to a node using TCP:
 
-  # Enable node IPC connection
+  # Enable node TCP connection
   $ ironfishw config:set walletNodeTcpEnabled true
+  $ ironfishw config:set walletNodeTlsEnabled false
 
   # Set node TCP Host
   $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
 
   # Set node TCP Port
   $ ironfishw config:set walletNodeTcpPort 19957
-  
+
   ----------
 
   # Alternatively, start the wallet using CLI flags
-  $ ironfishw start --node.tcp --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957
+  $ ironfishw start --node.tcp --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957 --no-node.tcp.tls
 
 3) To connect to a node using TLS:
 
-  # Enable node IPC connection
+  # Enable node TLS connection
   $ ironfishw config:set walletNodeTcpEnabled true
+  $ ironfishw config:set walletNodeTlsEnabled true
 
   # Set node TCP Host
   $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
