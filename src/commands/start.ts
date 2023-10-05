@@ -194,7 +194,7 @@ Examples:
 
   # Set node authentication token
   $ ironfishw config:set walletNodeRpcAuthToken supersecretvalue
-  
+
   ----------
 
   # Alternatively, start the wallet using CLI flags
