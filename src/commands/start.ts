@@ -173,12 +173,12 @@ Examples:
   $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
 
   # Set node TCP Port
-  $ ironfishw config:set walletNodeTcpPort 19957
+  $ ironfishw config:set walletNodeTcpPort 8020
 
   ----------
 
   # Alternatively, start the wallet using CLI flags
-  $ ironfishw start --node.tcp --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957 --no-node.tcp.tls
+  $ ironfishw start --node.tcp --node.tcp.host=0.tcp.domain.io --node.tcp.port=8020 --no-node.tcp.tls
 
 3) To connect to a node using TLS:
 
@@ -190,7 +190,7 @@ Examples:
   $ ironfishw config:set walletNodeTcpHost 0.tcp.domain.io
 
   # Set node TCP Port
-  $ ironfishw config:set walletNodeTcpPort 19957
+  $ ironfishw config:set walletNodeTcpPort 8020
 
   # Set node authentication token
   $ ironfishw config:set walletNodeRpcAuthToken supersecretvalue
@@ -198,7 +198,7 @@ Examples:
   ----------
 
   # Alternatively, start the wallet using CLI flags
-  $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=19957 --node.auth=supersecretvalue`)
+  $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=8020 --node.auth=supersecretvalue`)
       this.exit(1)
     }
 
