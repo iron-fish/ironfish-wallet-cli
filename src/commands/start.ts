@@ -173,7 +173,7 @@ Examples:
 
   # Set node TCP Port
   $ ironfishw config:set walletNodeTcpPort 19957
-  
+
   ----------
 
   # Alternatively, start the wallet using CLI flags
@@ -192,7 +192,7 @@ Examples:
 
   # Set node authentication token
   $ ironfishw config:set walletNodeRpcAuthToken supersecretvalue
-  
+
   ----------
 
   # Alternatively, start the wallet using CLI flags
