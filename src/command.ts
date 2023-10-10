@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
+  Config as IronfishConfig,
   ConfigOptions,
   createRootLogger,
   DatabaseVersionError,
@@ -41,6 +42,7 @@ import {
 } from './flags'
 import { IronfishCliPKG } from './package'
 import { hasUserResponseError } from './utils'
+import { WalletConfig, WalletConfigOptions } from './walletConfig'
 
 export type SIGNALS = 'SIGTERM' | 'SIGINT' | 'SIGUSR2'
 
@@ -70,6 +72,8 @@ export abstract class IronfishCommand extends Command {
   // that may use this will not be executed until after
   // run() is called and it provides a lot of value
   sdk!: IronfishSdk
+
+  walletConfig!: WalletConfig
 
   /**
    * Use this logger instance for debug/error output.
@@ -200,41 +204,6 @@ export abstract class IronfishCommand extends Command {
       internalOverrides.rpcAuthToken = rpcAuthFlag
     }
 
-    const walletNodeUseIpcFlag = getFlag(flags, WalletNodeUseIpcFlagKey)
-    if (typeof walletNodeUseIpcFlag === 'boolean') {
-      configOverrides.walletNodeIpcEnabled = walletNodeUseIpcFlag
-    }
-
-    const walletNodeIpcPathFlag = getFlag(flags, WalletNodeIpcPathFlagKey)
-    if (typeof walletNodeIpcPathFlag === 'string') {
-      configOverrides.walletNodeIpcPath = walletNodeIpcPathFlag
-    }
-
-    const walletNodeUseTcpFlag = getFlag(flags, WalletNodeUseTcpFlagKey)
-    if (typeof walletNodeUseTcpFlag === 'boolean') {
-      configOverrides.walletNodeTcpEnabled = walletNodeUseTcpFlag
-    }
-
-    const walletNodeTcpHostFlag = getFlag(flags, WalletNodeTcpHostFlagKey)
-    if (typeof walletNodeTcpHostFlag === 'string') {
-      configOverrides.walletNodeTcpHost = walletNodeTcpHostFlag
-    }
-
-    const walletNodeTcpPortFlag = getFlag(flags, WalletNodeTcpPortFlagKey)
-    if (typeof walletNodeTcpPortFlag === 'number') {
-      configOverrides.walletNodeTcpPort = walletNodeTcpPortFlag
-    }
-
-    const walletNodeTcpTlsFlag = getFlag(flags, WalletNodeTcpTlsFlagKey)
-    if (typeof walletNodeTcpTlsFlag === 'boolean') {
-      configOverrides.walletNodeTlsEnabled = walletNodeTcpTlsFlag
-    }
-
-    const walletNodeAuthFlag = getFlag(flags, WalletNodeAuthFlagKey)
-    if (typeof walletNodeAuthFlag === 'string') {
-      configOverrides.walletNodeRpcAuthToken = walletNodeAuthFlag
-    }
-
     this.sdk = await IronfishSdk.init({
       pkg: IronfishCliPKG,
       configOverrides: configOverrides,
@@ -243,6 +212,112 @@ export abstract class IronfishCommand extends Command {
       dataDir: typeof dataDirFlag === 'string' ? dataDirFlag : undefined,
       logger: this.logger,
     })
+
+    this.walletConfig = new WalletConfig(this.sdk.fileSystem, this.sdk.dataDir)
+    await this.walletConfig.load()
+
+    const walletConfigOverrides: Partial<WalletConfigOptions> = {}
+
+    // TODO: This is here for backawrds compatability to migrate wallet configs in the old
+    this.migrateOldConfig(
+      this.sdk.config,
+      this.walletConfig,
+      walletConfigOverrides,
+    )
+
+    const walletNodeUseIpcFlag = getFlag(flags, WalletNodeUseIpcFlagKey)
+    if (typeof walletNodeUseIpcFlag === 'boolean') {
+      walletConfigOverrides.walletNodeIpcEnabled = walletNodeUseIpcFlag
+    }
+
+    const walletNodeIpcPathFlag = getFlag(flags, WalletNodeIpcPathFlagKey)
+    if (typeof walletNodeIpcPathFlag === 'string') {
+      walletConfigOverrides.walletNodeIpcPath = walletNodeIpcPathFlag
+    }
+
+    const walletNodeUseTcpFlag = getFlag(flags, WalletNodeUseTcpFlagKey)
+    if (typeof walletNodeUseTcpFlag === 'boolean') {
+      walletConfigOverrides.walletNodeTcpEnabled = walletNodeUseTcpFlag
+    }
+
+    const walletNodeTcpHostFlag = getFlag(flags, WalletNodeTcpHostFlagKey)
+    if (typeof walletNodeTcpHostFlag === 'string') {
+      walletConfigOverrides.walletNodeTcpHost = walletNodeTcpHostFlag
+    }
+
+    const walletNodeTcpPortFlag = getFlag(flags, WalletNodeTcpPortFlagKey)
+    if (typeof walletNodeTcpPortFlag === 'number') {
+      walletConfigOverrides.walletNodeTcpPort = walletNodeTcpPortFlag
+    }
+
+    const walletNodeTcpTlsFlag = getFlag(flags, WalletNodeTcpTlsFlagKey)
+    if (typeof walletNodeTcpTlsFlag === 'boolean') {
+      walletConfigOverrides.walletNodeTlsEnabled = walletNodeTcpTlsFlag
+    }
+
+    const walletNodeAuthFlag = getFlag(flags, WalletNodeAuthFlagKey)
+    if (typeof walletNodeAuthFlag === 'string') {
+      walletConfigOverrides.walletNodeRpcAuthToken = walletNodeAuthFlag
+    }
+
+    Object.assign(this.walletConfig.overrides, walletConfigOverrides)
+  }
+
+  migrateOldConfig(
+    config: IronfishConfig,
+    walletConfig: WalletConfig,
+    walletConfigOverrides: Partial<WalletConfigOptions>,
+  ) {
+    if (
+      config.isSet('walletNodeIpcEnabled') &&
+      !walletConfig.isSet('walletNodeIpcEnabled')
+    ) {
+      walletConfigOverrides.walletNodeIpcEnabled = config.get(
+        'walletNodeIpcEnabled',
+      )
+    }
+    if (
+      config.isSet('walletNodeIpcPath') &&
+      !walletConfig.isSet('walletNodeIpcPath')
+    ) {
+      walletConfigOverrides.walletNodeIpcPath = config.get('walletNodeIpcPath')
+    }
+    if (
+      config.isSet('walletNodeTcpEnabled') &&
+      !walletConfig.isSet('walletNodeTcpEnabled')
+    ) {
+      walletConfigOverrides.walletNodeTcpEnabled = config.get(
+        'walletNodeTcpEnabled',
+      )
+    }
+    if (
+      config.isSet('walletNodeTcpHost') &&
+      !walletConfig.isSet('walletNodeTcpHost')
+    ) {
+      walletConfigOverrides.walletNodeTcpHost = config.get('walletNodeTcpHost')
+    }
+    if (
+      config.isSet('walletNodeTcpPort') &&
+      !walletConfig.isSet('walletNodeTcpPort')
+    ) {
+      walletConfigOverrides.walletNodeTcpPort = config.get('walletNodeTcpPort')
+    }
+    if (
+      config.isSet('walletNodeTlsEnabled') &&
+      !walletConfig.isSet('walletNodeTlsEnabled')
+    ) {
+      walletConfigOverrides.walletNodeTlsEnabled = config.get(
+        'walletNodeTlsEnabled',
+      )
+    }
+    if (
+      config.isSet('walletNodeRpcAuthToken') &&
+      !walletConfig.isSet('walletNodeRpcAuthToken')
+    ) {
+      walletConfigOverrides.walletNodeRpcAuthToken = config.get(
+        'walletNodeRpcAuthToken',
+      )
+    }
   }
 
   listenForSignals(): void {

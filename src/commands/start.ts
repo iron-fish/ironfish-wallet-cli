@@ -127,19 +127,19 @@ export default class WalletStart extends IronfishCommand {
 
     let validNodeClientConfig = false
 
-    if (this.sdk.config.get('walletNodeTcpEnabled')) {
-      if (this.sdk.config.get('walletNodeTlsEnabled')) {
+    if (this.walletConfig.get('walletNodeTcpEnabled')) {
+      if (this.walletConfig.get('walletNodeTlsEnabled')) {
         validNodeClientConfig =
-          !!this.sdk.config.get('walletNodeTcpHost') &&
-          !!this.sdk.config.get('walletNodeTcpPort') &&
-          !!this.sdk.config.get('walletNodeRpcAuthToken')
+          !!this.walletConfig.get('walletNodeTcpHost') &&
+          !!this.walletConfig.get('walletNodeTcpPort') &&
+          !!this.walletConfig.get('walletNodeRpcAuthToken')
       } else {
         validNodeClientConfig =
-          !!this.sdk.config.get('walletNodeTcpHost') &&
-          !!this.sdk.config.get('walletNodeTcpPort')
+          !!this.walletConfig.get('walletNodeTcpHost') &&
+          !!this.walletConfig.get('walletNodeTcpPort')
       }
-    } else if (this.sdk.config.get('walletNodeIpcEnabled')) {
-      validNodeClientConfig = !!this.sdk.config.get('walletNodeIpcPath')
+    } else if (this.walletConfig.get('walletNodeIpcEnabled')) {
+      validNodeClientConfig = !!this.walletConfig.get('walletNodeIpcPath')
     }
 
     if (!validNodeClientConfig) {
