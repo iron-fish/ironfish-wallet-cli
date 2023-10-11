@@ -219,11 +219,7 @@ export abstract class IronfishCommand extends Command {
     const walletConfigOverrides: Partial<WalletConfigOptions> = {}
 
     // TODO: This is here for backawrds compatability to migrate wallet configs in the old
-    this.migrateOldConfig(
-      this.sdk.config,
-      this.walletConfig,
-      walletConfigOverrides,
-    )
+    await this.migrateOldConfig(this.sdk.config, this.walletConfig)
 
     const walletNodeUseIpcFlag = getFlag(flags, WalletNodeUseIpcFlagKey)
     if (typeof walletNodeUseIpcFlag === 'boolean') {
@@ -263,61 +259,28 @@ export abstract class IronfishCommand extends Command {
     Object.assign(this.walletConfig.overrides, walletConfigOverrides)
   }
 
-  migrateOldConfig(
+  async migrateOldConfig(
     config: IronfishConfig,
     walletConfig: WalletConfig,
-    walletConfigOverrides: Partial<WalletConfigOptions>,
-  ) {
-    if (
-      config.isSet('walletNodeIpcEnabled') &&
-      !walletConfig.isSet('walletNodeIpcEnabled')
-    ) {
-      walletConfigOverrides.walletNodeIpcEnabled = config.get(
-        'walletNodeIpcEnabled',
-      )
+  ): Promise<void> {
+    const keys: Array<keyof WalletConfigOptions> = [
+      'walletNodeIpcPath',
+      'walletNodeTcpEnabled',
+      'walletNodeTcpHost',
+      'walletNodeTcpPort',
+      'walletNodeTlsEnabled',
+      'walletNodeRpcAuthToken',
+    ]
+
+    for (const key of keys) {
+      if (config.isSet(key) && !walletConfig.isSet(key)) {
+        walletConfig.set(key, config.get(key))
+        config.clear(key)
+      }
     }
-    if (
-      config.isSet('walletNodeIpcPath') &&
-      !walletConfig.isSet('walletNodeIpcPath')
-    ) {
-      walletConfigOverrides.walletNodeIpcPath = config.get('walletNodeIpcPath')
-    }
-    if (
-      config.isSet('walletNodeTcpEnabled') &&
-      !walletConfig.isSet('walletNodeTcpEnabled')
-    ) {
-      walletConfigOverrides.walletNodeTcpEnabled = config.get(
-        'walletNodeTcpEnabled',
-      )
-    }
-    if (
-      config.isSet('walletNodeTcpHost') &&
-      !walletConfig.isSet('walletNodeTcpHost')
-    ) {
-      walletConfigOverrides.walletNodeTcpHost = config.get('walletNodeTcpHost')
-    }
-    if (
-      config.isSet('walletNodeTcpPort') &&
-      !walletConfig.isSet('walletNodeTcpPort')
-    ) {
-      walletConfigOverrides.walletNodeTcpPort = config.get('walletNodeTcpPort')
-    }
-    if (
-      config.isSet('walletNodeTlsEnabled') &&
-      !walletConfig.isSet('walletNodeTlsEnabled')
-    ) {
-      walletConfigOverrides.walletNodeTlsEnabled = config.get(
-        'walletNodeTlsEnabled',
-      )
-    }
-    if (
-      config.isSet('walletNodeRpcAuthToken') &&
-      !walletConfig.isSet('walletNodeRpcAuthToken')
-    ) {
-      walletConfigOverrides.walletNodeRpcAuthToken = config.get(
-        'walletNodeRpcAuthToken',
-      )
-    }
+
+    await walletConfig.save()
+    await config.save()
   }
 
   listenForSignals(): void {
