@@ -50,9 +50,6 @@ export class NotesCommand extends IronfishCommand {
           sender: {
             header: 'Sender',
           },
-          noteHash: {
-            header: 'Note Hash',
-          },
           transactionHash: {
             header: 'From Transaction',
           },
@@ -71,6 +68,9 @@ export class NotesCommand extends IronfishCommand {
             header: 'Amount',
             get: (row) => CurrencyUtils.renderIron(row.value),
             minWidth: 16,
+          },
+          noteHash: {
+            header: 'Note Hash',
           },
           nullifier: {
             header: 'Nullifier',
