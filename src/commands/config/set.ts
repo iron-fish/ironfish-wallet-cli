@@ -41,7 +41,7 @@ export class SetCommand extends IronfishCommand {
     const name = args.name as string
     const value = args.value as string
 
-    const client = await connectRpcConfig(this.sdk, flags.local)
+    const client = await connectRpcConfig(this.sdk, this.walletConfig, flags.local)
     await client.config.setConfig({ name, value })
 
     this.exit(0)

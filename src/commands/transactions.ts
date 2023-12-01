@@ -70,7 +70,7 @@ export class TransactionsCommand extends IronfishCommand {
         ? Format.yaml
         : Format.cli
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
     const response = client.wallet.getAccountTransactionsStream({

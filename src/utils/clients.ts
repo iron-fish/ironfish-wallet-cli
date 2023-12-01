@@ -4,13 +4,15 @@
 import {
   ApiNamespace,
   IronfishSdk,
-  NodeUtils,
   RpcClient,
   RpcMemoryClient,
 } from '@ironfish/sdk'
+import { WalletConfig } from '../walletConfig'
+import { walletNode } from '../walletNode'
 
 export async function connectRpcConfig(
   sdk: IronfishSdk,
+  walletConfig: WalletConfig,
   forceLocal = false,
   forceRemote = false,
 ): Promise<Pick<RpcClient, 'config'>> {
@@ -30,7 +32,12 @@ export async function connectRpcConfig(
 
   // This connection uses a wallet node since that is the most granular type
   // of node available. This can be refactored in the future if needed.
-  const node = await sdk.walletNode({ connectNodeClient: false })
+  const node = await walletNode({
+    connectNodeClient: false,
+    walletConfig: walletConfig,
+    sdk: sdk,
+  })
+
   const clientMemory = new RpcMemoryClient(
     sdk.logger,
     node.rpc.getRouter([ApiNamespace.config]),
@@ -40,6 +47,7 @@ export async function connectRpcConfig(
 
 export async function connectRpcWallet(
   sdk: IronfishSdk,
+  walletConfig: WalletConfig,
   options: {
     forceLocal?: boolean
     forceRemote?: boolean
@@ -71,15 +79,18 @@ export async function connectRpcWallet(
     ApiNamespace.worker,
   ]
 
-  const node = await sdk.walletNode({
+  const node = await walletNode({
     connectNodeClient: !!options.connectNodeClient,
+    sdk: sdk,
+    walletConfig: walletConfig,
   })
+
   const clientMemory = new RpcMemoryClient(
     sdk.logger,
     node.rpc.getRouter(namespaces),
   )
 
-  await NodeUtils.waitForOpen(node)
+  await node.waitForOpen()
   if (options.connectNodeClient) {
     await node.connectRpc()
   }

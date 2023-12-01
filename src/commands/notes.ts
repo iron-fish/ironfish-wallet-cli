@@ -30,7 +30,7 @@ export class NotesCommand extends IronfishCommand {
     const { flags, args } = await this.parse(NotesCommand)
     const account = args.account as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 

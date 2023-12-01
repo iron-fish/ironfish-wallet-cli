@@ -33,7 +33,7 @@ export class StatusCommand extends IronfishCommand {
     const account = args.account as string | undefined
 
     if (!follow) {
-      const client = await connectRpcWallet(this.sdk)
+      const client = await connectRpcWallet(this.sdk, this.walletConfig, )
 
       const response = await client.wallet.getAccountsStatus({
         account,
@@ -74,7 +74,7 @@ export class StatusCommand extends IronfishCommand {
 
       statusText.clearBaseLine(0)
 
-      const client = await connectRpcWallet(this.sdk)
+      const client = await connectRpcWallet(this.sdk, this.walletConfig)
 
       const response = await client.wallet.getAccountsStatus({
         account: account,

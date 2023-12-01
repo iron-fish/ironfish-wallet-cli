@@ -93,7 +93,7 @@ export class Mint extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(Mint)
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: !flags.offline,
     })
 

@@ -36,7 +36,7 @@ export class DeleteCommand extends IronfishCommand {
     const wait = flags.wait
     const account = args.account as string
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 

@@ -20,7 +20,7 @@ export class AccountsCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(AccountsCommand)
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 

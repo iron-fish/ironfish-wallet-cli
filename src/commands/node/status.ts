@@ -35,7 +35,7 @@ export default class Status extends IronfishCommand {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
-      const client = await connectRpcWallet(this.sdk, { forceRemote: true })
+      const client = await connectRpcWallet(this.sdk, this.walletConfig, { forceRemote: true })
       const response = await client.wallet.getNodeStatus()
       this.log(renderStatus(response.content, flags.all))
       this.exit(0)

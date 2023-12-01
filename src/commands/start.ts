@@ -1,9 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { IronfishNode, NodeUtils, PromiseUtils } from '@ironfish/sdk'
+import { PromiseUtils } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
-import inspector from 'node:inspector'
 import { IronfishCommand, SIGNALS } from '../command'
 import {
   ConfigFlag,
@@ -31,6 +30,8 @@ import {
   WalletRemoteFlags,
 } from '../flags'
 import { ONE_FISH_IMAGE } from '../images'
+import { CommandFlags } from '../types'
+import { WalletNode, walletNode } from '../walletNode'
 
 const DEFAULT_ACCOUNT_NAME = 'default'
 
@@ -76,8 +77,7 @@ export default class WalletStart extends IronfishCommand {
     }),
   }
 
-  node: IronfishNode | null = null
-
+  node: WalletNode | null = null
   startDonePromise: Promise<void> | null = null
 
   async start(): Promise<void> {
@@ -85,46 +85,76 @@ export default class WalletStart extends IronfishCommand {
     this.startDonePromise = startDonePromise
 
     const { flags } = await this.parse(WalletStart)
-    const { name, workers, upgrade, networkId, customNetwork } = flags
 
-    if (
-      workers !== undefined &&
-      workers !== this.sdk.config.get('nodeWorkers')
-    ) {
-      this.sdk.config.setOverride('nodeWorkers', workers)
+    this.loadFlagsIntoConfig(flags)
+    this.validateWalletConfig()
+
+    const node = await walletNode({
+      connectNodeClient: true,
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+    })
+
+    this.log(`\n${ONE_FISH_IMAGE}`)
+    this.log(`Version             ${node.pkg.version} @ ${node.pkg.git}`)
+    this.log(` `)
+
+    await node.waitForOpen(() => this.closing)
+
+    if (this.closing) {
+      return startDoneResolve()
     }
 
-    if (name !== undefined && name.trim() !== this.sdk.config.get('nodeName')) {
-      this.sdk.config.setOverride('nodeName', name.trim())
+    await node.start()
+
+    if (node.internal.get('isFirstRun')) {
+      await this.firstRun(node)
     }
 
-    if (
-      upgrade !== undefined &&
-      upgrade !== this.sdk.config.get('databaseMigrate')
-    ) {
-      this.sdk.config.setOverride('databaseMigrate', upgrade)
+    this.node = node
+
+    startDoneResolve()
+    this.listenForSignals()
+    await node.waitForShutdown()
+  }
+
+  async closeFromSignal(signal: SIGNALS): Promise<void> {
+    this.log(`Shutting down node after ${signal}`)
+    await this.startDonePromise
+    await this.node?.shutdown()
+    await this.node?.closeDB()
+  }
+
+  private async firstRun(node: WalletNode): Promise<void> {
+    this.log('')
+    this.log('Thank you for installing the Iron Fish Wallet Node.')
+
+    if (!node.wallet.getDefaultAccount()) {
+      await this.setDefaultAccount(node)
     }
 
-    if (networkId !== undefined && customNetwork !== undefined) {
-      throw new Error(
-        'Cannot specify both the networkId and customNetwork flags at the same time',
-      )
+    this.log('')
+    node.internal.set('isFirstRun', false)
+    await node.internal.save()
+  }
+
+  private async setDefaultAccount(node: WalletNode): Promise<void> {
+    if (!node.wallet.accountExists(DEFAULT_ACCOUNT_NAME)) {
+      const account = await node.wallet.createAccount(DEFAULT_ACCOUNT_NAME, {
+        setDefault: true,
+      })
+
+      this.log(`New default account created: ${account.name}`)
+      this.log(`Account's public address: ${account.publicAddress}`)
+    } else {
+      this.log(`The default account is now: ${DEFAULT_ACCOUNT_NAME}`)
+      await node.wallet.setDefaultAccount(DEFAULT_ACCOUNT_NAME)
     }
 
-    if (
-      networkId !== undefined &&
-      networkId !== this.sdk.config.get('networkId')
-    ) {
-      this.sdk.config.setOverride('networkId', networkId)
-    }
+    this.log('')
+  }
 
-    if (
-      customNetwork !== undefined &&
-      customNetwork !== this.sdk.config.get('customNetwork')
-    ) {
-      this.sdk.config.setOverride('customNetwork', customNetwork)
-    }
-
+  private validateWalletConfig() {
     let validNodeClientConfig = false
 
     if (this.walletConfig.get('walletNodeTcpEnabled')) {
@@ -143,8 +173,47 @@ export default class WalletStart extends IronfishCommand {
     }
 
     if (!validNodeClientConfig) {
-      this
-        .log(`Cannot start the wallet: no node connection configuration specified.
+      this.log(SETUP_INSTRUCTIONS)
+      this.exit(1)
+    }
+  }
+
+  private loadFlagsIntoConfig(flags: CommandFlags<typeof WalletStart>) {
+    const { name, workers, upgrade, networkId, customNetwork } = flags
+    const config = this.sdk.config
+
+    if (workers !== undefined && workers !== config.get('nodeWorkers')) {
+      config.setOverride('nodeWorkers', workers)
+    }
+
+    if (name !== undefined && name.trim() !== config.get('nodeName')) {
+      config.setOverride('nodeName', name.trim())
+    }
+
+    if (upgrade !== undefined && upgrade !== config.get('databaseMigrate')) {
+      config.setOverride('databaseMigrate', upgrade)
+    }
+
+    if (networkId !== undefined && customNetwork !== undefined) {
+      throw new Error(
+        'Cannot specify both the networkId and customNetwork flags at the same time',
+      )
+    }
+
+    if (networkId !== undefined && networkId !== config.get('networkId')) {
+      config.setOverride('networkId', networkId)
+    }
+
+    if (
+      customNetwork !== undefined &&
+      customNetwork !== config.get('customNetwork')
+    ) {
+      config.setOverride('customNetwork', customNetwork)
+    }
+  }
+}
+
+const SETUP_INSTRUCTIONS = `Cannot start the wallet: no node connection configuration specified.
 
 Use 'ironfishw config:set' to connect to a node via TCP, TLS, or IPC.
 
@@ -198,73 +267,4 @@ Examples:
   ----------
 
   # Alternatively, start the wallet using CLI flags
-  $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=8020 --node.auth=supersecretvalue`)
-      this.exit(1)
-    }
-
-    const node = await this.sdk.walletNode()
-    const nodeName = this.sdk.config.get('nodeName').trim() || null
-
-    this.log(`\n${ONE_FISH_IMAGE}`)
-    this.log(`Version             ${node.pkg.version} @ ${node.pkg.git}`)
-    this.log(`Wallet Node Name    ${nodeName || 'NONE'}`)
-    if (inspector.url()) {
-      this.log(`Inspector           ${String(inspector.url())}`)
-    }
-    this.log(` `)
-
-    await NodeUtils.waitForOpen(node, () => this.closing)
-
-    if (this.closing) {
-      return startDoneResolve()
-    }
-
-    await node.start()
-
-    if (node.internal.get('isFirstRun')) {
-      await this.firstRun(node)
-    }
-
-    this.node = node
-
-    startDoneResolve()
-    this.listenForSignals()
-    await node.waitForShutdown()
-  }
-
-  async closeFromSignal(signal: SIGNALS): Promise<void> {
-    this.log(`Shutting down node after ${signal}`)
-    await this.startDonePromise
-    await this.node?.shutdown()
-    await this.node?.closeDB()
-  }
-
-  private async firstRun(node: IronfishNode): Promise<void> {
-    this.log('')
-    this.log('Thank you for installing the Iron Fish Wallet Node.')
-
-    if (!node.wallet.getDefaultAccount()) {
-      await this.setDefaultAccount(node)
-    }
-
-    this.log('')
-    node.internal.set('isFirstRun', false)
-    await node.internal.save()
-  }
-
-  private async setDefaultAccount(node: IronfishNode): Promise<void> {
-    if (!node.wallet.accountExists(DEFAULT_ACCOUNT_NAME)) {
-      const account = await node.wallet.createAccount(DEFAULT_ACCOUNT_NAME, {
-        setDefault: true,
-      })
-
-      this.log(`New default account created: ${account.name}`)
-      this.log(`Account's public address: ${account.publicAddress}`)
-    } else {
-      this.log(`The default account is now: ${DEFAULT_ACCOUNT_NAME}`)
-      await node.wallet.setDefaultAccount(DEFAULT_ACCOUNT_NAME)
-    }
-
-    this.log('')
-  }
-}
+  $ ironfishw start --node.tcp --node.tcp.tls --node.tcp.host=0.tcp.domain.io --node.tcp.port=8020 --node.auth=supersecretvalue`

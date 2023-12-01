@@ -106,7 +106,7 @@ export class Send extends IronfishCommand {
     let to = flags.to?.trim()
     let from = flags.account?.trim()
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: !flags.offline,
     })
 

@@ -33,7 +33,7 @@ export class CreateCommand extends IronfishCommand {
       })
     }
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 

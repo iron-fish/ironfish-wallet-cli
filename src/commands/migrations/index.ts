@@ -8,6 +8,7 @@ import {
   DataDirFlag,
   DataDirFlagKey,
 } from '../../flags'
+import { walletNode } from '../../walletNode'
 
 export class StatusCommand extends IronfishCommand {
   static description = `List all the migration statuses`
@@ -20,7 +21,12 @@ export class StatusCommand extends IronfishCommand {
   async start(): Promise<void> {
     await this.parse(StatusCommand)
 
-    const node = await this.sdk.walletNode({ connectNodeClient: false })
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: false,
+    })
+
     await node.migrator.check()
   }
 }

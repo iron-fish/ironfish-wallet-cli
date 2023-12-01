@@ -25,7 +25,7 @@ export class UseCommand extends IronfishCommand {
     const { args } = await this.parse(UseCommand)
     const account = args.account as string
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
     await client.wallet.useAccount({ account })

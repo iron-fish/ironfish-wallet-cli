@@ -405,40 +405,88 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
+"@ironfish/rust-nodejs-darwin-arm64@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-arm64/-/rust-nodejs-darwin-arm64-1.11.0.tgz#5b9a208dd725d4502711b5d420c480a1b8a5ab70"
+  integrity sha512-JxNZlbLpv/aAMQfOgFNVhz/bwTiTvtjFbe1f0zfeyWi5SNmLmQNC10NM50BJN+3qDVrp/5t6YSqfSMcCntDfeA==
+
 "@ironfish/rust-nodejs-darwin-arm64@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-arm64/-/rust-nodejs-darwin-arm64-1.9.0.tgz#61aae2b495367684af369ee6a83a987f87e3d491"
   integrity sha512-kiwyFZB8jsLeTZIqLFLOcIAgSaybshzdCjnHIRnief5Z0EJkPLt5Ux0k8WcsoKQumST/T9dXyytjnVZyBllcFg==
+
+"@ironfish/rust-nodejs-darwin-x64@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-x64/-/rust-nodejs-darwin-x64-1.11.0.tgz#161df2abe1a3df6fd604c8aa09963ffed4c656ec"
+  integrity sha512-BI9sfveSKXeUeQZzsVtMyYXNohcaMAxiIfzysZOFisZ6ki/2sJB7QAiZfz6IBoGeYTh56VjZHEoKm+iKARlp1Q==
 
 "@ironfish/rust-nodejs-darwin-x64@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-darwin-x64/-/rust-nodejs-darwin-x64-1.9.0.tgz#c42f649c7cf6515ef2cc04bc00cee8b3095ef430"
   integrity sha512-sQe2WMyMSnQNd0GdNfXIQyyzSWtQKVZC7CPmQOeg2a96RScHtwOmPX6hYk6gjs1NIFFXkN+ngRf0iHySBtmDyA==
 
+"@ironfish/rust-nodejs-linux-arm64-gnu@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-gnu/-/rust-nodejs-linux-arm64-gnu-1.11.0.tgz#0593520db355917c44cb82b3c867d34485426c6c"
+  integrity sha512-CYF1oApjJuU2RZ9QfDrtWhL2YHc3oNE+/BA8RsDlOGyotO+DwNqDj5IRsUqMNVKQpaFRJLbwcxm9ZlemDC+t1w==
+
 "@ironfish/rust-nodejs-linux-arm64-gnu@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-gnu/-/rust-nodejs-linux-arm64-gnu-1.9.0.tgz#4cf062fd3a0539282451775b4537de90f22c7571"
   integrity sha512-GZAydmLgtvmdKqLrP10/3c8AOY3vz4/x8xDFX2iRms7KZ4U+R5tWME/wPfXdg0c24GKlKtKBa9e8hB+oH1xQWA==
+
+"@ironfish/rust-nodejs-linux-arm64-musl@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-musl/-/rust-nodejs-linux-arm64-musl-1.11.0.tgz#8dfb65d39b3a1dfdb6fb9c186663cf19096d1c62"
+  integrity sha512-9O8Bo+qpOeM8HqJTF2hj9QZjEZoyxYhr9J405ATbRpEXgHdscM5cMCpM5sgzJrp//RrKx+47u37/gQRHwu3wZw==
 
 "@ironfish/rust-nodejs-linux-arm64-musl@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-arm64-musl/-/rust-nodejs-linux-arm64-musl-1.9.0.tgz#7e58244922892803e71a56b1c88fb8e84b76ab82"
   integrity sha512-zvTnIXMQK6LzQY4U7NwpPfbr5WbzLSVBV4ZuY6cn/YmSmeDV6ioTs4CQ9AGJNMG4COhkoGVYL4mAcYqd6j6ypw==
 
+"@ironfish/rust-nodejs-linux-x64-gnu@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-gnu/-/rust-nodejs-linux-x64-gnu-1.11.0.tgz#c8505484dd42e9838b0f9823479712f163467756"
+  integrity sha512-IWzKsKxlwMBnpGbhC6/s3Yp36to0naewtqe7Al9amLC+465SQJTxVwd0W3tiNB1misLAuzRgmGebIswx7dipzA==
+
 "@ironfish/rust-nodejs-linux-x64-gnu@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-gnu/-/rust-nodejs-linux-x64-gnu-1.9.0.tgz#e4f9bf36af16e56743275236cfe40e1956eb6d9a"
   integrity sha512-YtEKVc4vU7yLJjUnoRoxOTRN64ipqjzJ2jiewzmTGI1ECx5Fz4YJgn7yHZ90km5CYPGD/pyb3v0dfxrNNeOEjg==
+
+"@ironfish/rust-nodejs-linux-x64-musl@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-musl/-/rust-nodejs-linux-x64-musl-1.11.0.tgz#0628e7a59c16207a9b6cff7ee5e5b4ea7ef1f78f"
+  integrity sha512-mjRyl8AQXqF402mGx78vDNKl9wpfokhg7iBZuylFxvQFQYvl1sXcxjQ+B1zuHQ/Uwp74NF7oZqjo0PBr8U3RKw==
 
 "@ironfish/rust-nodejs-linux-x64-musl@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-linux-x64-musl/-/rust-nodejs-linux-x64-musl-1.9.0.tgz#ae6de60eb0a1abd2e57b001429e5e13bdc193de7"
   integrity sha512-z91XjHFoiw8tljtIhJIMLSa1uu61x7Xl37jO7ZxzaOaydD3ufor2GvlSZTC9MFClE3eYfN6ik8mMf7oufs5o0A==
 
+"@ironfish/rust-nodejs-win32-x64-msvc@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-win32-x64-msvc/-/rust-nodejs-win32-x64-msvc-1.11.0.tgz#ee091af118807a834b241d24510495f5cc0369a5"
+  integrity sha512-P7tFg9so3s6FNVOjNJCDGdklvjdVWZoP5pFeWQjRPja7CbJAQyzqOf8zSc6T/PQ5Pi3ZUXpExDzDjsHB6GFNEw==
+
 "@ironfish/rust-nodejs-win32-x64-msvc@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs-win32-x64-msvc/-/rust-nodejs-win32-x64-msvc-1.9.0.tgz#0ed9115909ec17b549f52f82100d00328b04f135"
   integrity sha512-0xCWJAZjRpJlqzVsrFZ670iaZkSlv0HLPorMwhUZbJu/7pYabfU2SPhxon0R/jJ7jHkCAdOvmQ9/SYbZ0UbpzQ==
+
+"@ironfish/rust-nodejs@1.11.0":
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/rust-nodejs/-/rust-nodejs-1.11.0.tgz#2ce8c64685005e14dc9e099a82a899600c782833"
+  integrity sha512-dML9wza8E/h2M9f0CRyb/Bghd+eArwitk8eYmjiJFJwBQlVwzstcg5AxbGZeRFl7yXKqxgzNoAX1oexT87ms0w==
+  optionalDependencies:
+    "@ironfish/rust-nodejs-darwin-arm64" "1.11.0"
+    "@ironfish/rust-nodejs-darwin-x64" "1.11.0"
+    "@ironfish/rust-nodejs-linux-arm64-gnu" "1.11.0"
+    "@ironfish/rust-nodejs-linux-arm64-musl" "1.11.0"
+    "@ironfish/rust-nodejs-linux-x64-gnu" "1.11.0"
+    "@ironfish/rust-nodejs-linux-x64-musl" "1.11.0"
+    "@ironfish/rust-nodejs-win32-x64-msvc" "1.11.0"
 
 "@ironfish/rust-nodejs@1.9.0":
   version "1.9.0"
@@ -453,14 +501,14 @@
     "@ironfish/rust-nodejs-linux-x64-musl" "1.9.0"
     "@ironfish/rust-nodejs-win32-x64-msvc" "1.9.0"
 
-"@ironfish/sdk@1.10.0":
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/@ironfish/sdk/-/sdk-1.10.0.tgz#615f9ad5a07a1952e2ac62de3ea5dc0b9a701743"
-  integrity sha512-xI1/kfDKwXX3wJuKtpx5UlbpXTvATMM6P8sPhdnyKYW1FMAiOzLcv5lj6ZC09ip8zwBdfL6/bZJjWiDAh1JEhw==
+"@ironfish/sdk@1.13.0":
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/@ironfish/sdk/-/sdk-1.13.0.tgz#cdfdc616f460c86505a361b27a0af1e910d113c3"
+  integrity sha512-wKAMR/Z3Bzxru2V7tpZ7a7ebYCW5iRgHVWF+nn5P6FSTdvWKMFn9SPOmJMw9HgWdfH8CILNZVj0XxuKYMhBrkw==
   dependencies:
     "@ethersproject/bignumber" "5.7.0"
     "@fast-csv/format" "4.3.5"
-    "@ironfish/rust-nodejs" "1.9.0"
+    "@ironfish/rust-nodejs" "1.11.0"
     "@napi-rs/blake-hash" "1.3.3"
     axios "0.21.4"
     bech32 "2.0.0"
@@ -479,7 +527,7 @@
     leveldown "5.6.0"
     levelup "4.4.0"
     lodash "4.17.21"
-    node-datachannel "0.4.0"
+    node-datachannel "0.5.1"
     node-forge "1.3.1"
     parse-json "5.2.0"
     sqlite "4.0.23"
@@ -5066,12 +5114,18 @@ node-addon-api@^4.2.0:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-4.3.0.tgz#52a1a0b475193e0928e98e0426a0d1254782b77f"
   integrity sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==
 
-node-datachannel@0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/node-datachannel/-/node-datachannel-0.4.0.tgz#cd237cbc121221f5f6342cbf2226120dda6dc52f"
-  integrity sha512-4ljypzRaWfM7bLtd4fpQaE4u+bAg5d8wPADycY60RfaZLoxVjcHk+Hsg+gtyyxNIeG6Cdtp3iDN+DUGAAjeVuw==
+node-datachannel@0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/node-datachannel/-/node-datachannel-0.5.1.tgz#55bf24c86ffb83ffa03a1d4363965598971e5a84"
+  integrity sha512-3hwCrBWJqYoozwVtJNzNtISLKwa3l/XTbrPFCyhC3KCgW1IvYMHhHm5FW37p0p2oth3J6MDwCw3T/0m7DTR7lw==
   dependencies:
+    node-domexception "^2.0.1"
     prebuild-install "^7.0.1"
+
+node-domexception@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/node-domexception/-/node-domexception-2.0.1.tgz#83b0d101123b5bbf91018fd569a58b88ae985e5b"
+  integrity sha512-M85rnSC7WQ7wnfQTARPT4LrK7nwCHLdDFOCcItZMhTQjyCebJH8GciKqYJNgaOFZs9nFmTmd/VMyi3OW5jA47w==
 
 node-fetch@^2.6.7:
   version "2.6.12"

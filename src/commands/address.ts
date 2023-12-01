@@ -27,7 +27,7 @@ export class AddressCommand extends IronfishCommand {
     const { args } = await this.parse(AddressCommand)
     const account = args.account as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 
