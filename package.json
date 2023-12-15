@@ -19,7 +19,7 @@
     "/oclif.manifest.json"
   ],
   "engines": {
-    "node": "18.x"
+    "node": ">=18"
   },
   "devDependencies": {
     "@types/blessed": "0.1.22",
