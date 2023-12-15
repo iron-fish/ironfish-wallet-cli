@@ -56,7 +56,7 @@ export class PostCommand extends IronfishCommand {
     const serialized = Buffer.from(transaction, 'hex')
     const raw = RawTransactionSerde.deserialize(serialized)
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: flags.broadcast,
     })
 

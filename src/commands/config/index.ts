@@ -26,7 +26,7 @@ export class ShowCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(ShowCommand)
 
-    const client = await connectRpcConfig(this.sdk, flags.local)
+    const client = await connectRpcConfig(this.sdk, this.walletConfig, flags.local)
     const response = await client.config.getConfig({ user: flags.user })
 
     let output = JSON.stringify(response.content, undefined, '   ')

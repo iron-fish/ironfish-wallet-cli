@@ -39,7 +39,7 @@ export class ImportCommand extends IronfishCommand {
     const { flags, args } = await this.parse(ImportCommand)
     const blob = args.blob as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
 

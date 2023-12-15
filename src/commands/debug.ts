@@ -8,12 +8,12 @@ import {
   FileUtils,
   IronfishPKG,
 } from '@ironfish/sdk'
-import { WalletNode } from '@ironfish/sdk/build/src/walletNode'
 import { execSync } from 'child_process'
 import os from 'os'
 import { getHeapStatistics } from 'v8'
 import { IronfishCommand } from '../command'
 import { LocalFlags } from '../flags'
+import { WalletNode, walletNode } from '../walletNode'
 
 const SPACE_BUFFER = 8
 
@@ -26,7 +26,11 @@ export default class Debug extends IronfishCommand {
   }
 
   async start(): Promise<void> {
-    const node = await this.sdk.walletNode()
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: true,
+    })
 
     let dbOpen = true
     try {

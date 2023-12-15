@@ -15,6 +15,7 @@ import {
   VerboseFlag,
   VerboseFlagKey,
 } from '../flags'
+import { walletNode } from '../walletNode'
 
 export default class Repl extends IronfishCommand {
   static description = 'An interactive terminal to the node'
@@ -39,14 +40,19 @@ export default class Repl extends IronfishCommand {
       ApiNamespace.worker,
     ]
 
-    const node = await this.sdk.walletNode()
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: true,
+    })
+
     const client = new RpcMemoryClient(
       this.logger,
       node.rpc.getRouter(namespaces),
     )
 
     if (flags.opendb) {
-      await NodeUtils.waitForOpen(node)
+      await node.waitForOpen()
     }
 
     this.log('Examples:')

@@ -32,7 +32,7 @@ export class RenameCommand extends IronfishCommand {
     const account = args.account as string
     const newName = args['new-name'] as string
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
     await client.wallet.renameAccount({ account, newName })

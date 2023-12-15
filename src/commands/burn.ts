@@ -81,7 +81,7 @@ export class Burn extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(Burn)
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: !flags.offline,
     })
 

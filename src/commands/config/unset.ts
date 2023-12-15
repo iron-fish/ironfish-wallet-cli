@@ -32,7 +32,7 @@ export class UnsetCommand extends IronfishCommand {
     const { args, flags } = await this.parse(UnsetCommand)
     const name = args.name as string
 
-    const client = await connectRpcConfig(this.sdk, flags.local)
+    const client = await connectRpcConfig(this.sdk, this.walletConfig, flags.local)
     await client.config.unsetConfig({ name })
 
     this.exit(0)

@@ -5,6 +5,7 @@ import { NodeUtils, TransactionStatus } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { LocalFlags } from '../flags'
+import { walletNode } from '../walletNode'
 
 export default class PruneCommand extends IronfishCommand {
   static description = 'Removes expired transactions from the wallet'
@@ -35,8 +36,14 @@ export default class PruneCommand extends IronfishCommand {
     const { flags } = await this.parse(PruneCommand)
 
     CliUx.ux.action.start(`Opening node`)
-    const node = await this.sdk.walletNode({ connectNodeClient: false })
-    await NodeUtils.waitForOpen(node)
+
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: false,
+    })
+
+    await node.waitForOpen()
     CliUx.ux.action.stop('Done.')
 
     if (flags.expire) {

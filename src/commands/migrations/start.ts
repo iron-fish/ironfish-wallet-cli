@@ -10,6 +10,7 @@ import {
   DataDirFlagKey,
   LocalFlags,
 } from '../../flags'
+import { walletNode } from '../../walletNode'
 
 export class StartCommand extends IronfishCommand {
   static description = `Run migrations`
@@ -32,7 +33,12 @@ export class StartCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(StartCommand)
 
-    const node = await this.sdk.walletNode({ connectNodeClient: false })
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: false,
+    })
+
     await node.migrator.migrate({ quiet: flags.quiet, dryRun: flags.dry })
   }
 }

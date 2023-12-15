@@ -44,7 +44,7 @@ export class AssetsCommand extends IronfishCommand {
     const { flags, args } = await this.parse(AssetsCommand)
     const account = args.account as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, {
+    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
     const response = client.wallet.getAssets({

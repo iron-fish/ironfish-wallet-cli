@@ -8,6 +8,7 @@ import {
   DataDirFlag,
   DataDirFlagKey,
 } from '../../flags'
+import { walletNode } from '../../walletNode'
 
 export class RevertCommand extends IronfishCommand {
   static description = `Revert the last run migration`
@@ -22,7 +23,12 @@ export class RevertCommand extends IronfishCommand {
   async start(): Promise<void> {
     await this.parse(RevertCommand)
 
-    const node = await this.sdk.walletNode({ connectNodeClient: false })
+    const node = await walletNode({
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+      connectNodeClient: false,
+    })
+
     await node.migrator.revert()
   }
 }
