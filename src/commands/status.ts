@@ -4,6 +4,9 @@
 import {
   GetAccountStatusResponse,
   PromiseUtils,
+  RpcAccountStatus,
+  RpcAccountStatusSchema,
+  RpcClient,
   RpcResponseEnded,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
@@ -11,7 +14,7 @@ import { FlagInput } from '@oclif/core/lib/interfaces'
 import blessed from 'blessed'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { connectRpcWallet, RpcClientWallet } from '../utils/clients'
 
 export class StatusCommand extends IronfishCommand {
   static description = `Get status of an account`
@@ -29,18 +32,12 @@ export class StatusCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { args, flags } = await this.parse(StatusCommand)
     const follow = flags.follow as boolean | undefined
-
     const account = args.account as string | undefined
 
     if (!follow) {
-      const client = await connectRpcWallet(this.sdk, this.walletConfig, )
-
-      const response = await client.wallet.getAccountsStatus({
-        account,
-      })
-
-      this.renderStatus(response, flags, this.log.bind(this))
-
+      const client = await connectRpcWallet(this.sdk, this.walletConfig)
+      const accounts = await this.getAccountsStatus(client, account)
+      this.renderStatus(accounts, flags, this.log.bind(this))
       this.exit(0)
     }
 
@@ -76,9 +73,7 @@ export class StatusCommand extends IronfishCommand {
 
       const client = await connectRpcWallet(this.sdk, this.walletConfig)
 
-      const response = await client.wallet.getAccountsStatus({
-        account: account,
-      })
+      const accounts = await this.getAccountsStatus(client, account)
 
       let tableBody = ''
 
@@ -89,7 +84,7 @@ export class StatusCommand extends IronfishCommand {
         tableBody += s + '\n'
       }
 
-      this.renderStatus(response, flags, logTable)
+      this.renderStatus(accounts, flags, logTable)
 
       statusText.setContent(tableBody)
 
@@ -101,12 +96,12 @@ export class StatusCommand extends IronfishCommand {
   }
 
   renderStatus(
-    response: RpcResponseEnded<GetAccountStatusResponse>,
+    accounts: RpcAccountStatus[],
     flags: FlagInput,
     printLine: (s: string) => void,
   ): void {
     CliUx.ux.table(
-      response.content.accounts,
+      accounts,
       {
         name: {
           header: 'Account Name',
@@ -130,5 +125,20 @@ export class StatusCommand extends IronfishCommand {
         ...flags,
       },
     )
+  }
+
+  async getAccountsStatus(
+    client: RpcClientWallet,
+    account?: string | undefined,
+  ): Promise<RpcAccountStatus[]> {
+    if (account) {
+      return await client.wallet
+        .getAccountStatus({ account })
+        .then((r) => [r.content.account])
+    }
+
+    return await client.wallet
+      .getAccountsStatus()
+      .then((r) => r.content.accounts)
   }
 }
