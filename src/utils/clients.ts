@@ -45,6 +45,11 @@ export async function connectRpcConfig(
   return clientMemory
 }
 
+export type RpcClientWallet = Pick<
+  RpcClient,
+  'config' | 'rpc' | 'wallet' | 'worker'
+>
+
 export async function connectRpcWallet(
   sdk: IronfishSdk,
   walletConfig: WalletConfig,
@@ -57,7 +62,7 @@ export async function connectRpcWallet(
     forceRemote: false,
     connectNodeClient: false,
   },
-): Promise<Pick<RpcClient, 'config' | 'rpc' | 'wallet' | 'worker'>> {
+): Promise<RpcClientWallet> {
   const forceRemote = options.forceRemote || sdk.config.get('enableRpcTcp')
 
   if (!options.forceLocal) {

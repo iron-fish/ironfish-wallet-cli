@@ -147,7 +147,7 @@ export class WalletNode {
     dataDir = dataDir || DEFAULT_DATA_DIR
 
     if (!config) {
-      config = new Config(files, dataDir)
+      config = new Config(files, dataDir, {})
       await config.load()
     }
 
@@ -278,6 +278,7 @@ export class WalletNode {
     )
     const walletGenesisHeader = BlockHeaderSerde.deserialize(
       networkDefinition.genesis.header,
+      this.strategy,
     )
 
     if (walletGenesisHeader.hash.equals(nodeGenesisHash)) {
@@ -396,10 +397,7 @@ export class WalletNode {
     this.started = false
   }
 
-  async onConfigChange<Key extends keyof ConfigOptions>(
-    key: Key,
-    newValue: ConfigOptions[Key],
-  ): Promise<void> {
+  async onConfigChange(key: string, newValue: unknown): Promise<void> {
     switch (key) {
       case 'enableMetrics': {
         if (newValue) {
