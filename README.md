@@ -4,7 +4,7 @@ The Iron Fish Wallet CLI is a standalone process which provides account key mana
 
 ## Development
 
-Ensure you are running Node 18.x.
+Ensure you are running Node 20.x.
 
 ### Local Node Changes
 
