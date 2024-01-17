@@ -2,33 +2,6 @@
 
 The Iron Fish Wallet CLI is a standalone process which provides account key management, transaction creation, and asset storage.
 
-## Development
-
-Ensure you are running Node 20.x.
-
-### Local Node Changes
-
-If you need to test changes simulatenously to both the [`ironfish` SDK](https://github.com/iron-fish/ironfish/tree/master/ironfish) and this standalone wallet code base. In that case, you can link the wallet to the local instance of the `ironfish` SDK using the following steps: 
-
-In the [`ironfish`](https://github.com/iron-fish/ironfish/) repository: 
-
-```bash
-# Build all packages
-$ yarn build 
-
-# Navigate to the SDK directory
-$ cd ironfish
-
-# Link the SDK package
-$ yarn link
-```
-
-After that, in this standalone wallet repository: 
-
-```bash
-$ yarn link "@ironfish/sdk"
-```
-
 ## Installation
 
 The Iron Fish Standalone Wallet can be installed via [NPM](https://www.npmjs.com/package/ironfish-wallet):
@@ -57,10 +30,10 @@ $ ironfishw config:set walletNodeTcpEnabled true
 $ ironfishw config:set walletNodeTcpHost <node-host>
 
 # Set the TCP port of the full node
-$ ironfishw config:set walletNodeTcpPort <node-port> 
+$ ironfishw config:set walletNodeTcpPort <node-port>
 
 # (Optional) If the full node has TLS enabled, set the RPC authentication token
-$ ironfishw config:set walletNodeRpcAuthToken <auth-token> 
+$ ironfishw config:set walletNodeRpcAuthToken <auth-token>
 
 # After the above commands are run, you can start the wallet
 $ ironfishw start
@@ -167,3 +140,30 @@ $ ironfishw accounts --help
 ### Workers
 
 * `ironfishw workers:status`    - Show the status of the worker pool
+
+## Development
+
+Ensure you are running Node 20.x.
+
+### Local Node Changes
+
+If you need to test changes simulatenously to both the [`ironfish` SDK](https://github.com/iron-fish/ironfish/tree/master/ironfish) and this standalone wallet code base. In that case, you can link the wallet to the local instance of the `ironfish` SDK using the following steps:
+
+In the [`ironfish`](https://github.com/iron-fish/ironfish/) repository:
+
+```bash
+# Build all packages
+$ yarn build
+
+# Navigate to the SDK directory
+$ cd ironfish
+
+# Link the SDK package
+$ yarn link
+```
+
+After that, in this standalone wallet repository:
+
+```bash
+$ yarn link "@ironfish/sdk"
+```
