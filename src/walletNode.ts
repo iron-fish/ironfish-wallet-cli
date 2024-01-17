@@ -6,7 +6,6 @@ import {
   ApiNamespace,
   Assert,
   AssetsVerifier,
-  Config,
   ConfigOptions,
   createRootLogger,
   DatabaseIsLockedError,
@@ -50,7 +49,7 @@ export enum Database {
 
 export class WalletNode {
   strategy: Strategy
-  config: Config
+  config: WalletConfig
   internal: InternalStore
   wallet: Wallet
   logger: Logger
@@ -85,7 +84,7 @@ export class WalletNode {
   }: {
     pkg: Package
     files: FileSystem
-    config: Config
+    config: WalletConfig
     internal: InternalStore
     wallet: Wallet
     strategy: Strategy
@@ -102,14 +101,14 @@ export class WalletNode {
     this.strategy = strategy
     this.metrics = metrics
     this.workerPool = workerPool
-    this.rpc = new RpcServer(this, internal)
+    this.rpc = new RpcServer({ config }, internal)
     this.logger = logger
     this.pkg = pkg
     this.nodeClient = nodeClient
     this.assetsVerifier = assetsVerifier
 
     this.migrator = new Migrator({
-      context: this,
+      context: { config, wallet, files },
       logger,
       databases: [Database.WALLET],
     })
@@ -135,7 +134,7 @@ export class WalletNode {
   }: {
     pkg: Package
     dataDir?: string
-    config?: Config
+    config?: WalletConfig
     internal?: InternalStore
     logger?: Logger
     metrics?: MetricsMonitor
@@ -147,7 +146,7 @@ export class WalletNode {
     dataDir = dataDir || DEFAULT_DATA_DIR
 
     if (!config) {
-      config = new Config(files, dataDir, {})
+      config = new WalletConfig(files, dataDir)
       await config.load()
     }
 
@@ -397,7 +396,10 @@ export class WalletNode {
     this.started = false
   }
 
-  async onConfigChange(key: string, newValue: unknown): Promise<void> {
+  async onConfigChange<Key extends keyof ConfigOptions>(
+    key: Key | string,
+    newValue: ConfigOptions[Key] | unknown,
+  ): Promise<void> {
     switch (key) {
       case 'enableMetrics': {
         if (newValue) {
@@ -464,7 +466,7 @@ Use 'ironfish config:set' to connect to a node via TCP, TLS, or IPC.\n`)
 
   const node = await WalletNode.init({
     pkg: options.sdk.pkg,
-    config: options.sdk.config,
+    config: options.walletConfig,
     internal: options.sdk.internal,
     files: options.sdk.fileSystem,
     logger: options.sdk.logger,
