@@ -101,7 +101,7 @@ export class WalletNode {
     this.strategy = strategy
     this.metrics = metrics
     this.workerPool = workerPool
-    this.rpc = new RpcServer({ config }, internal)
+    this.rpc = new RpcServer(this, internal)
     this.logger = logger
     this.pkg = pkg
     this.nodeClient = nodeClient
