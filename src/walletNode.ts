@@ -2,21 +2,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+import { FishHashContext } from '@ironfish/rust-nodejs'
 import {
   ApiNamespace,
   Assert,
   AssetsVerifier,
+  BlockHashSerdeInstance,
   ConfigOptions,
+  Consensus,
   createRootLogger,
   DatabaseIsLockedError,
   DEFAULT_DATA_DIR,
   FileSystem,
   getNetworkDefinition,
+  GraffitiSerdeInstance,
   InternalStore,
   IronfishSdk,
   Logger,
   MetricsMonitor,
   Migrator,
+  Network,
   Package,
   PromiseUtils,
   RpcHttpAdapter,
@@ -28,13 +33,12 @@ import {
   RpcTlsAdapter,
   RpcTlsClient,
   SetTimeoutToken,
-  Strategy,
-  TestnetConsensus,
+  Target,
   VerifiedAssetsCacheStore,
   Wallet,
   WalletDB,
 } from '@ironfish/sdk'
-import { BlockHeaderSerde } from '@ironfish/sdk/build/src/primitives/blockheader'
+import { BlockHasher } from '@ironfish/sdk/build/src/blockHasher'
 import { RpcIpcClient } from '@ironfish/sdk/build/src/rpc/clients/ipcClient'
 import {
   calculateWorkers,
@@ -48,7 +52,7 @@ export enum Database {
 }
 
 export class WalletNode {
-  strategy: Strategy
+  network: Network
   config: WalletConfig
   internal: InternalStore
   wallet: Wallet
@@ -75,7 +79,7 @@ export class WalletNode {
     config,
     internal,
     wallet,
-    strategy,
+    network,
     metrics,
     workerPool,
     logger,
@@ -87,7 +91,7 @@ export class WalletNode {
     config: WalletConfig
     internal: InternalStore
     wallet: Wallet
-    strategy: Strategy
+    network: Network
     metrics: MetricsMonitor
     workerPool: WorkerPool
     logger: Logger
@@ -98,7 +102,7 @@ export class WalletNode {
     this.config = config
     this.internal = internal
     this.wallet = wallet
-    this.strategy = strategy
+    this.network = network
     this.metrics = metrics
     this.workerPool = workerPool
     this.rpc = new RpcServer(this, internal)
@@ -129,7 +133,6 @@ export class WalletNode {
     logger = createRootLogger(),
     metrics,
     files,
-    strategyClass,
     nodeClient,
   }: {
     pkg: Package
@@ -139,7 +142,6 @@ export class WalletNode {
     logger?: Logger
     metrics?: MetricsMonitor
     files: FileSystem
-    strategyClass: typeof Strategy | null
     nodeClient: RpcSocketClient | null
   }): Promise<WalletNode> {
     logger = logger.withTag('walletnode')
@@ -179,10 +181,9 @@ export class WalletNode {
       files,
     )
 
-    const consensus = new TestnetConsensus(networkDefinition.consensus)
+    const consensus = new Consensus(networkDefinition.consensus)
 
-    strategyClass = strategyClass || Strategy
-    const strategy = new strategyClass({ workerPool, consensus })
+    const network = new Network(networkDefinition)
 
     const walletDB = new WalletDB({
       location: config.walletDatabasePath,
@@ -200,7 +201,7 @@ export class WalletNode {
 
     return new WalletNode({
       pkg,
-      strategy,
+      network,
       files,
       config,
       internal,
@@ -275,18 +276,43 @@ export class WalletNode {
       response.content.genesisBlockIdentifier.hash,
       'hex',
     )
-    const walletGenesisHeader = BlockHeaderSerde.deserialize(
-      networkDefinition.genesis.header,
-      this.strategy,
-    )
 
-    if (walletGenesisHeader.hash.equals(nodeGenesisHash)) {
+    let fishHashContext: FishHashContext | undefined = undefined
+    if (!this.network.consensus.isNeverActive('enableFishHash')) {
+      fishHashContext = new FishHashContext(false)
+    }
+
+    const blockHasher = new BlockHasher({
+      consensus: this.network.consensus,
+      context: fishHashContext,
+    })
+
+    const genesisHeader = networkDefinition.genesis.header
+
+    // TODO: This copies code from BlockHeaderSerde (https://github.com/iron-fish/ironfish/blob/master/ironfish/src/primitives/blockheader.ts)
+    // Refactor to use the same code once it is exported by the SDK
+    const walletGenesisHash = blockHasher.hashHeader({
+      sequence: Number(genesisHeader.sequence),
+      previousBlockHash: Buffer.from(
+        BlockHashSerdeInstance.deserialize(genesisHeader.previousBlockHash),
+      ),
+      noteCommitment: genesisHeader.noteCommitment,
+      transactionCommitment: genesisHeader.transactionCommitment,
+      target: new Target(genesisHeader.target),
+      randomness: BigInt(genesisHeader.randomness),
+      timestamp: new Date(genesisHeader.timestamp),
+      graffiti: Buffer.from(
+        GraffitiSerdeInstance.deserialize(genesisHeader.graffiti),
+      ),
+    })
+
+    if (walletGenesisHash.equals(nodeGenesisHash)) {
       this.logger.info('Verified genesis block hash')
     } else {
       throw new Error(
         `Cannot sync from this node because the node's genesis block hash ${nodeGenesisHash.toString(
           'hex',
-        )} does not match the wallet's genesis block hash ${walletGenesisHeader.hash.toString(
+        )} does not match the wallet's genesis block hash ${walletGenesisHash.toString(
           'hex',
         )}`,
       )
@@ -471,7 +497,6 @@ Use 'ironfish config:set' to connect to a node via TCP, TLS, or IPC.\n`)
     files: options.sdk.fileSystem,
     logger: options.sdk.logger,
     metrics: options.sdk.metrics,
-    strategyClass: options.sdk.strategyClass,
     dataDir: options.sdk.dataDir,
     nodeClient,
   })
