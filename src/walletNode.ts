@@ -7,7 +7,6 @@ import {
   Assert,
   AssetsVerifier,
   ConfigOptions,
-  Consensus,
   createRootLogger,
   DatabaseIsLockedError,
   DEFAULT_DATA_DIR,
@@ -178,8 +177,6 @@ export class WalletNode {
       files,
     )
 
-    const consensus = new Consensus(networkDefinition.consensus)
-
     const network = new Network(networkDefinition)
 
     const walletDB = new WalletDB({
@@ -192,7 +189,7 @@ export class WalletNode {
       config,
       database: walletDB,
       workerPool,
-      consensus,
+      consensus: network.consensus,
       nodeClient,
     })
 
@@ -259,12 +256,6 @@ export class WalletNode {
   }
 
   async verifyGenesisBlockHash(): Promise<void> {
-    const networkDefinition = await getNetworkDefinition(
-      this.config,
-      this.internal,
-      this.files,
-    )
-
     Assert.isNotNull(this.nodeClient)
 
     const response = await this.nodeClient.chain.getChainInfo()
@@ -279,7 +270,7 @@ export class WalletNode {
     })
 
     const rawGenesisHeader = headerDefinitionToHeader(
-      networkDefinition.genesis.header,
+      this.network.genesis.header,
     )
     const walletGenesisHash = blockHasher.hashHeader(rawGenesisHeader)
 
