@@ -17,6 +17,7 @@ import {
   Logger,
   MetricsMonitor,
   Migrator,
+  Network,
   Package,
   PromiseUtils,
   RpcHttpAdapter,
@@ -28,18 +29,17 @@ import {
   RpcTlsAdapter,
   RpcTlsClient,
   SetTimeoutToken,
-  Strategy,
-  TestnetConsensus,
   VerifiedAssetsCacheStore,
   Wallet,
   WalletDB,
 } from '@ironfish/sdk'
-import { BlockHeaderSerde } from '@ironfish/sdk/build/src/primitives/blockheader'
+import { BlockHasher } from '@ironfish/sdk/build/src/blockHasher'
 import { RpcIpcClient } from '@ironfish/sdk/build/src/rpc/clients/ipcClient'
 import {
   calculateWorkers,
   WorkerPool,
 } from '@ironfish/sdk/build/src/workerPool'
+import { headerDefinitionToHeader } from './utils/block'
 import { WalletConfig } from './walletConfig'
 
 export enum Database {
@@ -48,7 +48,7 @@ export enum Database {
 }
 
 export class WalletNode {
-  strategy: Strategy
+  network: Network
   config: WalletConfig
   internal: InternalStore
   wallet: Wallet
@@ -75,7 +75,7 @@ export class WalletNode {
     config,
     internal,
     wallet,
-    strategy,
+    network,
     metrics,
     workerPool,
     logger,
@@ -87,7 +87,7 @@ export class WalletNode {
     config: WalletConfig
     internal: InternalStore
     wallet: Wallet
-    strategy: Strategy
+    network: Network
     metrics: MetricsMonitor
     workerPool: WorkerPool
     logger: Logger
@@ -98,7 +98,7 @@ export class WalletNode {
     this.config = config
     this.internal = internal
     this.wallet = wallet
-    this.strategy = strategy
+    this.network = network
     this.metrics = metrics
     this.workerPool = workerPool
     this.rpc = new RpcServer(this, internal)
@@ -129,7 +129,6 @@ export class WalletNode {
     logger = createRootLogger(),
     metrics,
     files,
-    strategyClass,
     nodeClient,
   }: {
     pkg: Package
@@ -139,7 +138,6 @@ export class WalletNode {
     logger?: Logger
     metrics?: MetricsMonitor
     files: FileSystem
-    strategyClass: typeof Strategy | null
     nodeClient: RpcSocketClient | null
   }): Promise<WalletNode> {
     logger = logger.withTag('walletnode')
@@ -179,10 +177,7 @@ export class WalletNode {
       files,
     )
 
-    const consensus = new TestnetConsensus(networkDefinition.consensus)
-
-    strategyClass = strategyClass || Strategy
-    const strategy = new strategyClass({ workerPool, consensus })
+    const network = new Network(networkDefinition)
 
     const walletDB = new WalletDB({
       location: config.walletDatabasePath,
@@ -194,13 +189,13 @@ export class WalletNode {
       config,
       database: walletDB,
       workerPool,
-      consensus,
+      consensus: network.consensus,
       nodeClient,
     })
 
     return new WalletNode({
       pkg,
-      strategy,
+      network,
       files,
       config,
       internal,
@@ -261,12 +256,6 @@ export class WalletNode {
   }
 
   async verifyGenesisBlockHash(): Promise<void> {
-    const networkDefinition = await getNetworkDefinition(
-      this.config,
-      this.internal,
-      this.files,
-    )
-
     Assert.isNotNull(this.nodeClient)
 
     const response = await this.nodeClient.chain.getChainInfo()
@@ -275,18 +264,23 @@ export class WalletNode {
       response.content.genesisBlockIdentifier.hash,
       'hex',
     )
-    const walletGenesisHeader = BlockHeaderSerde.deserialize(
-      networkDefinition.genesis.header,
-      this.strategy,
-    )
 
-    if (walletGenesisHeader.hash.equals(nodeGenesisHash)) {
+    const blockHasher = new BlockHasher({
+      consensus: this.network.consensus,
+    })
+
+    const rawGenesisHeader = headerDefinitionToHeader(
+      this.network.genesis.header,
+    )
+    const walletGenesisHash = blockHasher.hashHeader(rawGenesisHeader)
+
+    if (walletGenesisHash.equals(nodeGenesisHash)) {
       this.logger.info('Verified genesis block hash')
     } else {
       throw new Error(
         `Cannot sync from this node because the node's genesis block hash ${nodeGenesisHash.toString(
           'hex',
-        )} does not match the wallet's genesis block hash ${walletGenesisHeader.hash.toString(
+        )} does not match the wallet's genesis block hash ${walletGenesisHash.toString(
           'hex',
         )}`,
       )
@@ -471,7 +465,6 @@ Use 'ironfish config:set' to connect to a node via TCP, TLS, or IPC.\n`)
     files: options.sdk.fileSystem,
     logger: options.sdk.logger,
     metrics: options.sdk.metrics,
-    strategyClass: options.sdk.strategyClass,
     dataDir: options.sdk.dataDir,
     nodeClient,
   })
