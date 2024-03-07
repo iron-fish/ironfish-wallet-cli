@@ -2,12 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { FishHashContext } from '@ironfish/rust-nodejs'
 import {
   ApiNamespace,
   Assert,
   AssetsVerifier,
-  BlockHashSerdeInstance,
   ConfigOptions,
   Consensus,
   createRootLogger,
@@ -15,7 +13,6 @@ import {
   DEFAULT_DATA_DIR,
   FileSystem,
   getNetworkDefinition,
-  GraffitiSerdeInstance,
   InternalStore,
   IronfishSdk,
   Logger,
@@ -33,7 +30,6 @@ import {
   RpcTlsAdapter,
   RpcTlsClient,
   SetTimeoutToken,
-  Target,
   VerifiedAssetsCacheStore,
   Wallet,
   WalletDB,
@@ -44,6 +40,7 @@ import {
   calculateWorkers,
   WorkerPool,
 } from '@ironfish/sdk/build/src/workerPool'
+import { headerDefinitionToHeader } from './utils/block'
 import { WalletConfig } from './walletConfig'
 
 export enum Database {
@@ -277,34 +274,14 @@ export class WalletNode {
       'hex',
     )
 
-    let fishHashContext: FishHashContext | undefined = undefined
-    if (!this.network.consensus.isNeverActive('enableFishHash')) {
-      fishHashContext = new FishHashContext(false)
-    }
-
     const blockHasher = new BlockHasher({
       consensus: this.network.consensus,
-      context: fishHashContext,
     })
 
-    const genesisHeader = networkDefinition.genesis.header
-
-    // TODO: This copies code from BlockHeaderSerde (https://github.com/iron-fish/ironfish/blob/master/ironfish/src/primitives/blockheader.ts)
-    // Refactor to use the same code once it is exported by the SDK
-    const walletGenesisHash = blockHasher.hashHeader({
-      sequence: Number(genesisHeader.sequence),
-      previousBlockHash: Buffer.from(
-        BlockHashSerdeInstance.deserialize(genesisHeader.previousBlockHash),
-      ),
-      noteCommitment: genesisHeader.noteCommitment,
-      transactionCommitment: genesisHeader.transactionCommitment,
-      target: new Target(genesisHeader.target),
-      randomness: BigInt(genesisHeader.randomness),
-      timestamp: new Date(genesisHeader.timestamp),
-      graffiti: Buffer.from(
-        GraffitiSerdeInstance.deserialize(genesisHeader.graffiti),
-      ),
-    })
+    const rawGenesisHeader = headerDefinitionToHeader(
+      networkDefinition.genesis.header,
+    )
+    const walletGenesisHash = blockHasher.hashHeader(rawGenesisHeader)
 
     if (walletGenesisHash.equals(nodeGenesisHash)) {
       this.logger.info('Verified genesis block hash')
