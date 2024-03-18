@@ -159,6 +159,7 @@ export class WalletNode {
     const assetsVerifier = new AssetsVerifier({
       apiUrl: config.get('assetVerificationApi'),
       cache: verifiedAssetsCache,
+      files,
       logger,
     })
 
