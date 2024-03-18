@@ -1,6 +1,6 @@
 {
   "name": "ironfish-wallet",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "CLI for running a standalone wallet",
   "author": "Iron Fish <contact@ironfish.network> (https://ironfish.network)",
   "main": "build/src/index.js",
