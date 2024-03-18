@@ -1,6 +1,6 @@
 {
   "name": "ironfish-wallet",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "CLI for running a standalone wallet",
   "author": "Iron Fish <contact@ironfish.network> (https://ironfish.network)",
   "main": "build/src/index.js",
@@ -38,7 +38,7 @@
     "jest-jasmine2": "29.3.1",
     "oclif": "2.6.0",
     "prettier": "2.8.8",
-    "typescript": "4.3.4",
+    "typescript": "5.0.4",
     "yarn": "1.22.10"
   },
   "scripts": {
@@ -55,8 +55,8 @@
     "oclif:version": "oclif readme && git add README.md"
   },
   "dependencies": {
-    "@ironfish/rust-nodejs": "1.17.0",
-    "@ironfish/sdk": "1.20.0",
+    "@ironfish/rust-nodejs": "2.1.0",
+    "@ironfish/sdk": "2.1.0",
     "@oclif/core": "1.23.1",
     "@oclif/plugin-help": "5.1.12",
     "@oclif/plugin-not-found": "2.3.1",

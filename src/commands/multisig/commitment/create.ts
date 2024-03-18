@@ -6,11 +6,12 @@ import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
 import { longPrompt } from '../../../utils/longPrompt'
+import { MultisigTransactionJson } from '../../../utils/multisig'
 import { renderUnsignedTransactionDetails } from '../../../utils/transaction'
 
 export class CreateSigningCommitmentCommand extends IronfishCommand {
-  static description = 'Create a signing commitment from a participant for a given transaction'
-  static hidden = true
+  static description =
+    'Create a signing commitment from a participant for a given transaction'
 
   static flags = {
     ...RemoteFlags,
@@ -32,18 +33,30 @@ export class CreateSigningCommitmentCommand extends IronfishCommand {
     }),
     confirm: Flags.boolean({
       default: false,
-      description: 'Confirm creating signature share without confirming',
+      description: 'Confirm creating signing commitment without confirming',
+    }),
+    path: Flags.string({
+      description: 'Path to a JSON file containing multisig transaction data',
     }),
   }
 
   async start(): Promise<void> {
     const { flags } = await this.parse(CreateSigningCommitmentCommand)
 
-    let identities = flags.identity
+    const loaded = await MultisigTransactionJson.load(
+      this.sdk.fileSystem,
+      flags.path,
+    )
+    const options = MultisigTransactionJson.resolveFlags(flags, loaded)
+
+    let identities = options.identity
     if (!identities || identities.length < 2) {
-      const input = await CliUx.ux.prompt('Enter the identities separated by commas', {
-        required: true,
-      })
+      const input = await longPrompt(
+        'Enter the identities separated by commas',
+        {
+          required: true,
+        },
+      )
       identities = input.split(',')
 
       if (identities.length < 2) {
@@ -52,11 +65,14 @@ export class CreateSigningCommitmentCommand extends IronfishCommand {
     }
     identities = identities.map((i) => i.trim())
 
-    let unsignedTransactionInput = flags.unsignedTransaction?.trim()
+    let unsignedTransactionInput = options.unsignedTransaction
     if (!unsignedTransactionInput) {
-      unsignedTransactionInput = await longPrompt('Enter the unsigned transaction: ', {
-        required: true,
-      })
+      unsignedTransactionInput = await longPrompt(
+        'Enter the unsigned transaction',
+        {
+          required: true,
+        },
+      )
     }
 
     const client = await this.sdk.connectRpc()
@@ -72,7 +88,9 @@ export class CreateSigningCommitmentCommand extends IronfishCommand {
     )
 
     if (!flags.confirm) {
-      const confirmed = await CliUx.ux.confirm('Confirm signing commitment creation (Y/N)')
+      const confirmed = await CliUx.ux.confirm(
+        'Confirm signing commitment creation (Y/N)',
+      )
       if (!confirmed) {
         this.error('Creating signing commitment aborted')
       }
@@ -86,5 +104,9 @@ export class CreateSigningCommitmentCommand extends IronfishCommand {
 
     this.log('\nCommitment:\n')
     this.log(response.content.commitment)
+
+    this.log()
+    this.log('Next step:')
+    this.log('Send the commitment to the multisig account coordinator.')
   }
 }

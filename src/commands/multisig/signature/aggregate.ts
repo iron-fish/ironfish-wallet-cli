@@ -6,10 +6,12 @@ import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
 import { longPrompt } from '../../../utils/longPrompt'
+import { MultisigTransactionJson } from '../../../utils/multisig'
+import { watchTransaction } from '../../../utils/transaction'
 
 export class MultisigSign extends IronfishCommand {
-  static description = 'Aggregate signature shares from participants to sign a transaction'
-  static hidden = true
+  static description =
+    'Aggregate signature shares from participants to sign a transaction'
 
   static flags = {
     ...RemoteFlags,
@@ -32,20 +34,39 @@ export class MultisigSign extends IronfishCommand {
       allowNo: true,
       description: 'Broadcast the transaction to the network after signing',
     }),
+    watch: Flags.boolean({
+      default: false,
+      description: 'Wait for the transaction to be confirmed',
+    }),
+    path: Flags.string({
+      description: 'Path to a JSON file containing multisig transaction data',
+    }),
   }
 
   async start(): Promise<void> {
     const { flags } = await this.parse(MultisigSign)
 
-    const signingPackage =
-      flags.signingPackage?.trim() ??
-      (await longPrompt('Enter the signing package: ', { required: true }))
+    const loaded = await MultisigTransactionJson.load(
+      this.sdk.fileSystem,
+      flags.path,
+    )
+    const options = MultisigTransactionJson.resolveFlags(flags, loaded)
 
-    let signatureShares = flags.signatureShare
-    if (!signatureShares) {
-      const input = await longPrompt('Enter the signature shares separated by commas: ', {
+    let signingPackage = options.signingPackage
+    if (!signingPackage) {
+      signingPackage = await longPrompt('Enter the signing package', {
         required: true,
       })
+    }
+
+    let signatureShares = options.signatureShare
+    if (!signatureShares) {
+      const input = await longPrompt(
+        'Enter the signature shares separated by commas',
+        {
+          required: true,
+        },
+      )
       signatureShares = input.split(',')
     }
     signatureShares = signatureShares.map((s) => s.trim())
@@ -68,15 +89,33 @@ export class MultisigSign extends IronfishCommand {
 
     if (flags.broadcast && response.content.accepted === false) {
       this.warn(
-        `Transaction '${transaction.hash().toString('hex')}' was not accepted into the mempool`,
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' was not accepted into the mempool`,
       )
     }
 
     if (flags.broadcast && response.content.broadcasted === false) {
-      this.warn(`Transaction '${transaction.hash().toString('hex')}' failed to broadcast`)
+      this.warn(
+        `Transaction '${transaction
+          .hash()
+          .toString('hex')}' failed to broadcast`,
+      )
     }
 
+    this.log(`Transaction: ${response.content.transaction}`)
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
     this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
+
+    if (flags.watch) {
+      this.log('')
+
+      await watchTransaction({
+        client,
+        logger: this.logger,
+        account: flags.account,
+        hash: transaction.hash().toString('hex'),
+      })
+    }
   }
 }

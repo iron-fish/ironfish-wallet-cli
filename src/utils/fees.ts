@@ -7,10 +7,10 @@ import {
   Assert,
   CreateTransactionRequest,
   CurrencyUtils,
-  ERROR_CODES,
   Logger,
   RawTransaction,
   RawTransactionSerde,
+  RPC_ERROR_CODES,
   RpcClient,
   RpcRequestError,
 } from '@ironfish/sdk'
@@ -104,7 +104,7 @@ async function getTxWithFee(
   const response = await promise.catch((e) => {
     if (
       e instanceof RpcRequestError &&
-      e.code === ERROR_CODES.INSUFFICIENT_BALANCE
+      e.code === RPC_ERROR_CODES.INSUFFICIENT_BALANCE
     ) {
       return null
     } else {

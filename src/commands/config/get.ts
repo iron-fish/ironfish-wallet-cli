@@ -45,7 +45,11 @@ export class GetCommand extends IronfishCommand {
     const { args, flags } = await this.parse(GetCommand)
     const name = (args.name as string).trim()
 
-    const client = await connectRpcConfig(this.sdk, this.walletConfig, flags.local)
+    const client = await connectRpcConfig(
+      this.sdk,
+      this.walletConfig,
+      flags.local,
+    )
 
     const response = await client.config.getConfig({
       user: flags.user,

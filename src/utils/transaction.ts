@@ -37,7 +37,9 @@ export async function renderUnsignedTransactionDetails(
 
       logger.log(`Asset ID:      ${mint.asset.id().toString('hex')}`)
       logger.log(`Name:          ${mint.asset.name().toString('utf8')}`)
-      logger.log(`Amount:        ${CurrencyUtils.renderIron(mint.value, false)}`)
+      logger.log(
+        `Amount:        ${CurrencyUtils.renderIron(mint.value, false)}`,
+      )
 
       if (mint.transferOwnershipTo) {
         logger.log(
@@ -63,7 +65,9 @@ export async function renderUnsignedTransactionDetails(
       logger.log('')
 
       logger.log(`Asset ID:      ${burn.assetId.toString('hex')}`)
-      logger.log(`Amount:        ${CurrencyUtils.renderIron(burn.value, false)}`)
+      logger.log(
+        `Amount:        ${CurrencyUtils.renderIron(burn.value, false)}`,
+      )
       logger.log('')
     }
   }
@@ -93,7 +97,13 @@ export async function renderUnsignedTransactionDetails(
         logged = true
         logger.log('')
 
-        logger.log(`Amount:        ${CurrencyUtils.renderIron(note.value, true, note.assetId)}`)
+        logger.log(
+          `Amount:        ${CurrencyUtils.renderIron(
+            note.value,
+            true,
+            note.assetId,
+          )}`,
+        )
         logger.log(`Memo:          ${note.memo}`)
         logger.log(`Recipient:     ${note.owner}`)
         logger.log(`Sender:        ${note.sender}`)
@@ -113,7 +123,13 @@ export async function renderUnsignedTransactionDetails(
         }
         logger.log('')
 
-        logger.log(`Amount:        ${CurrencyUtils.renderIron(note.value, true, note.assetId)}`)
+        logger.log(
+          `Amount:        ${CurrencyUtils.renderIron(
+            note.value,
+            true,
+            note.assetId,
+          )}`,
+        )
         logger.log(`Memo:          ${note.memo}`)
         logger.log(`Recipient:     ${note.owner}`)
         logger.log(`Sender:        ${note.sender}`)
@@ -148,7 +164,9 @@ Fee                  ${feeString}
 Memo                 ${memo}
 Outputs              ${transaction.outputs.length}
 Spends               ${transaction.spends.length}
-Expiration           ${transaction.expiration ? transaction.expiration.toString() : ''}
+Expiration           ${
+    transaction.expiration ? transaction.expiration.toString() : ''
+  }
 `
   logger.log(summary)
 }
@@ -203,7 +221,9 @@ export async function watchTransaction(options: {
     currentStatus = response?.content.transaction?.status ?? 'not found'
 
     if (prevStatus !== 'not found' && currentStatus === 'not found') {
-      CliUx.ux.action.stop(`Transaction ${options.hash} deleted while watching it.`)
+      CliUx.ux.action.stop(
+        `Transaction ${options.hash} deleted while watching it.`,
+      )
       break
     }
 
