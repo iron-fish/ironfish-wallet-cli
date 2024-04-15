@@ -200,10 +200,6 @@ export default class WalletStart extends IronfishCommand {
       )
     }
 
-    if (networkId !== undefined && networkId !== config.get('networkId')) {
-      config.setOverride('networkId', networkId)
-    }
-
     if (
       customNetwork !== undefined &&
       customNetwork !== config.get('customNetwork')
