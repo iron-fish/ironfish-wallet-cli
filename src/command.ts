@@ -17,7 +17,7 @@ import { CLIError, ExitError } from '@oclif/core/lib/errors'
 import {
   ConfigFlagKey,
   DataDirFlagKey,
-  NetworkIdKey,
+  NetworkIdFlagKey,
   RpcAuthFlagKey,
   RpcHttpHostFlagKey,
   RpcHttpPortFlagKey,
@@ -50,7 +50,7 @@ export type SIGNALS = 'SIGTERM' | 'SIGINT' | 'SIGUSR2'
 export type FLAGS =
   | typeof DataDirFlagKey
   | typeof ConfigFlagKey
-  | typeof NetworkIdKey
+  | typeof NetworkIdFlagKey
   | typeof RpcUseIpcFlagKey
   | typeof RpcUseTcpFlagKey
   | typeof RpcTcpHostFlagKey
@@ -206,7 +206,7 @@ export abstract class IronfishCommand extends Command {
       internalOverrides.rpcAuthToken = rpcAuthFlag
     }
 
-    const networkId = getFlag(flags, NetworkIdKey)
+    const networkId = getFlag(flags, NetworkIdFlagKey)
     if (typeof networkId === 'number') {
       internalOverrides.networkId = networkId
     }
