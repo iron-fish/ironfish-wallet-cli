@@ -54,7 +54,7 @@ export const DataDirFlag = Flags.string({
   env: 'IRONFISH_WALLET_DATA_DIR',
 })
 
-export const NetworkIdFlag = Flags.boolean({
+export const NetworkIdFlag = Flags.integer({
   char: 'i',
   default: undefined,
   description: 'Network ID of an official Iron Fish network to connect to',
