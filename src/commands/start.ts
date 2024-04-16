@@ -9,6 +9,8 @@ import {
   ConfigFlagKey,
   DataDirFlag,
   DataDirFlagKey,
+  NetworkIdFlag,
+  NetworkIdFlagKey,
   RpcHttpHostFlag,
   RpcHttpHostFlagKey,
   RpcHttpPortFlag,
@@ -43,6 +45,7 @@ export default class WalletStart extends IronfishCommand {
     [VerboseFlagKey]: VerboseFlag,
     [ConfigFlagKey]: ConfigFlag,
     [DataDirFlagKey]: DataDirFlag,
+    [NetworkIdFlagKey]: NetworkIdFlag,
     [RpcUseIpcFlagKey]: { ...RpcUseIpcFlag, allowNo: true },
     [RpcUseTcpFlagKey]: { ...RpcUseTcpFlag, allowNo: true },
     [RpcUseHttpFlagKey]: { ...RpcUseHttpFlag, allowNo: true },
@@ -63,11 +66,6 @@ export default class WalletStart extends IronfishCommand {
     upgrade: Flags.boolean({
       allowNo: true,
       description: 'Run migrations when an upgrade is required',
-    }),
-    networkId: Flags.integer({
-      char: 'i',
-      default: undefined,
-      description: 'Network ID of an official Iron Fish network to connect to',
     }),
     customNetwork: Flags.string({
       char: 'c',
@@ -198,10 +196,6 @@ export default class WalletStart extends IronfishCommand {
       throw new Error(
         'Cannot specify both the networkId and customNetwork flags at the same time',
       )
-    }
-
-    if (networkId !== undefined && networkId !== config.get('networkId')) {
-      config.setOverride('networkId', networkId)
     }
 
     if (

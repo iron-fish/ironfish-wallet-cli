@@ -19,6 +19,7 @@ export const VerboseFlagKey = 'verbose'
 export const ConfigFlagKey = 'config'
 export const ColorFlagKey = 'color'
 export const DataDirFlagKey = 'datadir'
+export const NetworkIdFlagKey = 'networkId'
 export const RpcUseIpcFlagKey = 'rpc.ipc'
 export const RpcUseTcpFlagKey = 'rpc.tcp'
 export const RpcTcpHostFlagKey = 'rpc.tcp.host'
@@ -51,6 +52,12 @@ export const DataDirFlag = Flags.string({
   default: '~/.ironfish-wallet',
   description: 'The path to the data dir',
   env: 'IRONFISH_WALLET_DATA_DIR',
+})
+
+export const NetworkIdFlag = Flags.boolean({
+  char: 'i',
+  default: undefined,
+  description: 'Network ID of an official Iron Fish network to connect to',
 })
 
 export const RpcUseIpcFlag = Flags.boolean({
