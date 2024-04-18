@@ -87,10 +87,19 @@ export default class WalletStart extends IronfishCommand {
     this.loadFlagsIntoConfig(flags)
     this.validateWalletConfig()
 
+    const { networkId, customNetwork } = flags
+    if (networkId !== undefined && customNetwork !== undefined) {
+      throw new Error(
+        'Cannot specify both the networkId and customNetwork flags at the same time',
+      )
+    }
+
     const node = await walletNode({
       connectNodeClient: true,
       sdk: this.sdk,
       walletConfig: this.walletConfig,
+      customNetworkPath: customNetwork,
+      networkId,
     })
 
     this.log(`\n${ONE_FISH_IMAGE}`)
@@ -177,7 +186,7 @@ export default class WalletStart extends IronfishCommand {
   }
 
   private loadFlagsIntoConfig(flags: CommandFlags<typeof WalletStart>) {
-    const { name, workers, upgrade, networkId, customNetwork } = flags
+    const { name, workers, upgrade } = flags
     const config = this.sdk.config
 
     if (workers !== undefined && workers !== config.get('nodeWorkers')) {
@@ -190,19 +199,6 @@ export default class WalletStart extends IronfishCommand {
 
     if (upgrade !== undefined && upgrade !== config.get('databaseMigrate')) {
       config.setOverride('databaseMigrate', upgrade)
-    }
-
-    if (networkId !== undefined && customNetwork !== undefined) {
-      throw new Error(
-        'Cannot specify both the networkId and customNetwork flags at the same time',
-      )
-    }
-
-    if (
-      customNetwork !== undefined &&
-      customNetwork !== config.get('customNetwork')
-    ) {
-      config.setOverride('customNetwork', customNetwork)
     }
   }
 }
