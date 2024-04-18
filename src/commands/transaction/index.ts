@@ -59,6 +59,10 @@ export class TransactionCommand extends IronfishCommand {
     Assert.isNotUndefined(response.content.transaction.notes)
     Assert.isNotUndefined(response.content.transaction.spends)
 
+    const renderedFee = CurrencyUtils.render(
+      response.content.transaction.fee,
+      true,
+    )
     this.log(`Transaction: ${hash}`)
     this.log(`Account: ${response.content.account}`)
     this.log(`Status: ${response.content.transaction.status}`)
@@ -68,12 +72,7 @@ export class TransactionCommand extends IronfishCommand {
         response.content.transaction.timestamp,
       )}`,
     )
-    this.log(
-      `Fee: ${CurrencyUtils.renderIron(
-        response.content.transaction.fee,
-        true,
-      )}`,
-    )
+    this.log(`Fee: ${renderedFee}`)
     if (
       response.content.transaction.blockHash &&
       response.content.transaction.blockSequence
@@ -109,7 +108,13 @@ export class TransactionCommand extends IronfishCommand {
       CliUx.ux.table(noteAssetPairs, {
         amount: {
           header: 'Amount',
-          get: ({ note }) => CurrencyUtils.renderIron(note.value),
+          get: ({ asset, note }) =>
+            CurrencyUtils.render(
+              note.value,
+              false,
+              asset.id,
+              asset.verification,
+            ),
         },
         assetName: {
           header: 'Asset Name',

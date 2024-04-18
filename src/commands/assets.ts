@@ -70,8 +70,6 @@ export class AssetsCommand extends IronfishCommand {
               renderAssetNameFromHex(row.name, {
                 verification: row.verification,
                 outputType: flags.output,
-                verbose: !!flags.verbose,
-                logWarn: this.warn.bind(this),
               }),
           }),
           id: {

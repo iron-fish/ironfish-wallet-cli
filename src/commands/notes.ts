@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { CurrencyUtils } from '@ironfish/sdk'
+import { CurrencyUtils, RpcAsset } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
@@ -30,6 +30,8 @@ export class NotesCommand extends IronfishCommand {
     const { flags, args } = await this.parse(NotesCommand)
     const account = args.account as string | undefined
 
+    const assetLookup: Map<string, RpcAsset> = new Map()
+
     const client = await connectRpcWallet(this.sdk, this.walletConfig, {
       connectNodeClient: false,
     })
@@ -39,6 +41,13 @@ export class NotesCommand extends IronfishCommand {
     let showHeader = !flags['no-header']
 
     for await (const note of response.contentStream()) {
+      if (!assetLookup.has(note.assetId)) {
+        assetLookup.set(
+          note.assetId,
+          (await client.wallet.getAsset({ id: note.assetId, account })).content,
+        )
+      }
+
       CliUx.ux.table(
         [note],
         {
@@ -66,7 +75,13 @@ export class NotesCommand extends IronfishCommand {
           ...TableCols.asset({ extended: flags.extended }),
           value: {
             header: 'Amount',
-            get: (row) => CurrencyUtils.renderIron(row.value),
+            get: (row) =>
+              CurrencyUtils.render(
+                row.value,
+                false,
+                row.assetId,
+                assetLookup.get(row.assetId)?.verification,
+              ),
             minWidth: 16,
           },
           noteHash: {

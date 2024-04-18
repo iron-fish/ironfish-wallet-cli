@@ -7,11 +7,12 @@ import {
   CurrencyUtils,
   RawTransaction,
   RawTransactionSerde,
+  RpcAsset,
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { IronFlag, RemoteFlags, WalletRemoteFlags } from '../flags'
+import { IronFlag, RemoteFlags, ValueFlag, WalletRemoteFlags } from '../flags'
 import { selectAsset } from '../utils/asset'
 import { connectRpcWallet } from '../utils/clients'
 import { promptCurrency } from '../utils/currency'
@@ -40,7 +41,7 @@ export class Burn extends IronfishCommand {
       minimum: 1n,
       flagName: 'fee',
     }),
-    amount: IronFlag({
+    amount: ValueFlag({
       char: 'a',
       description: 'Amount of coins to burn',
       flagName: 'amount',
@@ -127,7 +128,29 @@ export class Burn extends IronfishCommand {
       this.error(`You must have a custom asset in order to burn.`)
     }
 
-    let amount = flags.amount
+    const assetData = (
+      await client.wallet.getAsset({
+        account,
+        id: assetId,
+        confirmations: flags.confirmations,
+      })
+    ).content
+
+    let amount
+    if (flags.amount) {
+      const [parsedAmount, error] = CurrencyUtils.tryMajorToMinor(
+        flags.amount,
+        assetId,
+        assetData?.verification,
+      )
+
+      if (error) {
+        this.error(`${error.reason}`)
+      }
+
+      amount = parsedAmount
+    }
+
     if (!amount) {
       amount = await promptCurrency({
         client: client,
@@ -135,10 +158,11 @@ export class Burn extends IronfishCommand {
         text: 'Enter the amount of the custom asset to burn',
         minimum: 1n,
         logger: this.logger,
+        assetId: assetId,
+        assetVerification: assetData.verification,
         balance: {
           account,
           confirmations: flags.confirmations,
-          assetId,
         },
       })
     }
@@ -181,7 +205,7 @@ export class Burn extends IronfishCommand {
 
     if (
       !flags.confirm &&
-      !(await this.confirm(assetId, amount, raw.fee, account))
+      !(await this.confirm(assetData, amount, raw.fee, account))
     ) {
       this.error('Transaction aborted.')
     }
@@ -214,20 +238,19 @@ export class Burn extends IronfishCommand {
       )
     }
 
-    const assetResponse = await client.wallet.getAsset({
-      account,
-      id: assetId,
-      confirmations: flags.confirmations,
-    })
-    const assetName = BufferUtils.toHuman(
-      Buffer.from(assetResponse.content.name, 'hex'),
+    const assetName = BufferUtils.toHuman(Buffer.from(assetData.name, 'hex'))
+    const renderedAmount = CurrencyUtils.render(
+      amount,
+      false,
+      assetData.id,
+      assetData.verification,
     )
 
     this.log(`Burned asset ${assetName} from ${account}`)
     this.log(`Asset Identifier: ${assetId}`)
-    this.log(`Amount: ${CurrencyUtils.renderIron(amount)}`)
+    this.log(`Amount: ${renderedAmount}`)
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
-    this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
+    this.log(`Fee: ${CurrencyUtils.render(transaction.fee(), true)}`)
     this.log(
       `\nIf the transaction is mined, it will appear here https://explorer.ironfish.network/transaction/${transaction
         .hash()
@@ -247,20 +270,20 @@ export class Burn extends IronfishCommand {
   }
 
   async confirm(
-    assetId: string,
+    asset: RpcAsset,
     amount: bigint,
     fee: bigint,
     account: string,
   ): Promise<boolean> {
+    const renderedAmount = CurrencyUtils.render(
+      amount,
+      true,
+      asset.id,
+      asset.verification,
+    )
+    const renderedFee = CurrencyUtils.render(fee, true)
     this.log(
-      `You are about to burn: ${CurrencyUtils.renderIron(
-        amount,
-        true,
-        assetId,
-      )} plus a transaction fee of ${CurrencyUtils.renderIron(
-        fee,
-        true,
-      )} with the account ${account}`,
+      `You are about to burn: ${renderedAmount} plus a transaction fee of ${renderedFee} with the account ${account}`,
     )
 
     return CliUx.ux.confirm('Do you confirm (Y/N)?')

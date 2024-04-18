@@ -71,10 +71,10 @@ export async function selectFee(options: {
       required: true,
       text: 'Enter the fee amount in $IRON',
       logger: options.logger,
+      assetId: Asset.nativeId().toString('hex'),
       balance: {
         account: options.account,
         confirmations: options.confirmations,
-        assetId: Asset.nativeId().toString('hex'),
       },
     })
 
@@ -130,9 +130,7 @@ function getChoiceFromTx(
   value: RawTransaction | null
 } {
   return {
-    name: `${name} ${
-      transaction ? CurrencyUtils.renderIron(transaction.fee) : ''
-    }`,
+    name: `${name} ${transaction ? CurrencyUtils.render(transaction.fee) : ''}`,
     disabled: transaction ? false : 'Not enough $IRON',
     value: transaction,
   }

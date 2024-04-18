@@ -8,11 +8,12 @@ import {
   isValidPublicAddress,
   RawTransaction,
   RawTransactionSerde,
+  RpcAsset,
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { IronFlag, RemoteFlags, WalletRemoteFlags } from '../flags'
+import { IronFlag, RemoteFlags, ValueFlag, WalletRemoteFlags } from '../flags'
 import { selectAsset } from '../utils/asset'
 import { connectRpcWallet } from '../utils/clients'
 import { promptCurrency } from '../utils/currency'
@@ -35,7 +36,7 @@ export class Send extends IronfishCommand {
       char: 'f',
       description: 'The account to send money from',
     }),
-    amount: IronFlag({
+    amount: ValueFlag({
       char: 'a',
       description: 'Amount of coins to send',
       flagName: 'amount',
@@ -101,7 +102,6 @@ export class Send extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(Send)
-    let amount = flags.amount
     let assetId = flags.assetId
     let to = flags.to?.trim()
     let from = flags.account?.trim()
@@ -136,6 +136,29 @@ export class Send extends IronfishCommand {
       }
     }
 
+    const assetData = (
+      await client.wallet.getAsset({
+        account: from,
+        id: assetId,
+        confirmations: flags.confirmations,
+      })
+    ).content
+
+    let amount
+    if (flags.amount) {
+      const [parsedAmount, error] = CurrencyUtils.tryMajorToMinor(
+        flags.amount,
+        assetId,
+        assetData?.verification,
+      )
+
+      if (error) {
+        this.error(`${error.reason}`)
+      }
+
+      amount = parsedAmount
+    }
+
     if (amount == null) {
       amount = await promptCurrency({
         client: client,
@@ -143,10 +166,11 @@ export class Send extends IronfishCommand {
         text: 'Enter the amount',
         minimum: 1n,
         logger: this.logger,
+        assetId: assetId,
+        assetVerification: assetData.verification,
         balance: {
           account: from,
           confirmations: flags.confirmations,
-          assetId,
         },
       })
     }
@@ -260,15 +284,16 @@ export class Send extends IronfishCommand {
       )
     }
 
-    this.log(
-      `Sent ${CurrencyUtils.renderIron(
-        amount,
-        true,
-        assetId,
-      )} to ${to} from ${from}`,
+    const renderedAmount = CurrencyUtils.render(
+      amount,
+      true,
+      assetData.id,
+      assetData.verification,
     )
+    const renderedFee = CurrencyUtils.render(transaction.fee(), true)
+    this.log(`Sent ${renderedAmount} to ${to} from ${from}`)
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
-    this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
+    this.log(`Fee: ${renderedFee}`)
     this.log(`Memo: ${memo}`)
     this.log(
       `\nIf the transaction is mined, it will appear here https://explorer.ironfish.network/transaction/${transaction
@@ -295,16 +320,17 @@ export class Send extends IronfishCommand {
     from: string,
     to: string,
     memo: string,
+    assetData?: RpcAsset,
   ): Promise<boolean> {
+    const renderedAmount = CurrencyUtils.render(
+      amount,
+      true,
+      assetId,
+      assetData?.verification,
+    )
+    const renderedFee = CurrencyUtils.render(fee, true)
     this.log(
-      `You are about to send a transaction: ${CurrencyUtils.renderIron(
-        amount,
-        true,
-        assetId,
-      )} plus a transaction fee of ${CurrencyUtils.renderIron(
-        fee,
-        true,
-      )} to ${to} from the account "${from}" with the memo "${memo}"`,
+      `You are about to send a transaction: ${renderedAmount} plus a transaction fee of ${renderedFee} to ${to} from the account "${from}" with the memo "${memo}"`,
     )
 
     return await CliUx.ux.confirm('Do you confirm (Y/N)?')

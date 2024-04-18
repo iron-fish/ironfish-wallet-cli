@@ -1,17 +1,21 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+import { Asset } from '@ironfish/rust-nodejs'
 import {
   BufferUtils,
   CreateTransactionRequest,
   CurrencyUtils,
   RawTransaction,
   RawTransactionSerde,
+  RPC_ERROR_CODES,
+  RpcAsset,
+  RpcRequestError,
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { IronFlag, RemoteFlags, WalletRemoteFlags } from '../flags'
+import { IronFlag, RemoteFlags, ValueFlag, WalletRemoteFlags } from '../flags'
 import { selectAsset } from '../utils/asset'
 import { connectRpcWallet } from '../utils/clients'
 import { promptCurrency } from '../utils/currency'
@@ -41,7 +45,7 @@ export class Mint extends IronfishCommand {
       minimum: 1n,
       flagName: 'fee',
     }),
-    amount: IronFlag({
+    amount: ValueFlag({
       char: 'a',
       description: 'Amount of coins to mint in IRON',
       flagName: 'amount',
@@ -121,6 +125,11 @@ export class Mint extends IronfishCommand {
       account = response.content.account.name
     }
 
+    const publicKeyResponse = await client.wallet.getAccountPublicKey({
+      account,
+    })
+    const accountPublicKey = publicKeyResponse.content.publicKey
+
     if (flags.expiration !== undefined && flags.expiration < 0) {
       this.log('Expiration sequence must be non-negative')
       this.exit(1)
@@ -152,6 +161,9 @@ export class Mint extends IronfishCommand {
           required: false,
         })
       }
+
+      const newAsset = new Asset(accountPublicKey, name, metadata)
+      assetId = newAsset.id().toString('hex')
     } else if (!assetId) {
       const asset = await selectAsset(client, account, {
         action: 'mint',
@@ -168,7 +180,42 @@ export class Mint extends IronfishCommand {
       assetId = asset.id
     }
 
-    let amount = flags.amount
+    let assetData
+    if (assetId) {
+      try {
+        const assetRequest = await client.wallet.getAsset({ id: assetId })
+        assetData = assetRequest.content
+        if (assetData.owner !== accountPublicKey) {
+          this.error(`The account '${account}' does not own this asset.`)
+        }
+      } catch (e) {
+        if (
+          e instanceof RpcRequestError &&
+          e.code === RPC_ERROR_CODES.NOT_FOUND.valueOf()
+        ) {
+          // Do nothing, not finding an asset is acceptable since we're likely
+          // to be minting one for the first time
+        } else {
+          throw e
+        }
+      }
+    }
+
+    let amount
+    if (flags.amount) {
+      const [parsedAmount, error] = CurrencyUtils.tryMajorToMinor(
+        flags.amount,
+        assetId,
+        assetData?.verification,
+      )
+
+      if (error) {
+        this.error(`${error.reason}`)
+      }
+
+      amount = parsedAmount
+    }
+
     if (!amount) {
       amount = await promptCurrency({
         client: client,
@@ -176,6 +223,8 @@ export class Mint extends IronfishCommand {
         text: 'Enter the amount',
         minimum: 1n,
         logger: this.logger,
+        assetId: assetId,
+        assetVerification: assetData?.verification,
       })
     }
 
@@ -184,7 +233,8 @@ export class Mint extends IronfishCommand {
       outputs: [],
       mints: [
         {
-          assetId,
+          // Only provide the asset id if we are not minting an asset for the first time
+          ...(assetData != null ? { assetId } : {}),
           name,
           metadata,
           value: CurrencyUtils.encode(amount),
@@ -220,7 +270,15 @@ export class Mint extends IronfishCommand {
 
     if (
       !flags.confirm &&
-      !(await this.confirm(account, amount, raw.fee, assetId, name, metadata))
+      !(await this.confirm(
+        account,
+        amount,
+        raw.fee,
+        assetId,
+        name,
+        metadata,
+        assetData,
+      ))
     ) {
       this.error('Transaction aborted.')
     }
@@ -255,20 +313,21 @@ export class Mint extends IronfishCommand {
       )
     }
 
+    const renderedValue = CurrencyUtils.render(
+      minted.value,
+      true,
+      minted.asset.id().toString('hex'),
+      assetData?.verification,
+    )
+    const renderedFee = CurrencyUtils.render(transaction.fee(), true)
     this.log(
       `Minted asset ${BufferUtils.toHuman(
         minted.asset.name(),
       )} from ${account}`,
     )
     this.log(`Asset Identifier: ${minted.asset.id().toString('hex')}`)
-    this.log(
-      `Value: ${CurrencyUtils.renderIron(
-        minted.value,
-        true,
-        minted.asset.id().toString('hex'),
-      )}`,
-    )
-    this.log(`Fee: ${CurrencyUtils.renderIron(transaction.fee(), true)}`)
+    this.log(`Value: ${renderedValue}`)
+    this.log(`Fee: ${renderedFee}`)
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
     this.log(
       `\nIf the transaction is mined, it will appear here https://explorer.ironfish.network/transaction/${transaction
@@ -295,14 +354,23 @@ export class Mint extends IronfishCommand {
     assetId?: string,
     name?: string,
     metadata?: string,
+    assetData?: RpcAsset,
   ): Promise<boolean> {
     const nameString = name ? `\nName: ${name}` : ''
     const metadataString = metadata ? `\nMetadata: ${metadata}` : ''
+
+    const renderedAmount = CurrencyUtils.render(
+      amount,
+      !!assetId,
+      assetId,
+      assetData?.verification,
+    )
+    const renderedFee = CurrencyUtils.render(fee, true)
     this.log(
       `You are about to mint an asset with the account ${account}:${nameString}${metadataString}`,
     )
-    this.log(`Amount: ${CurrencyUtils.renderIron(amount, !!assetId, assetId)}`)
-    this.log(`Fee: ${CurrencyUtils.renderIron(fee, true)}`)
+    this.log(`Amount: ${renderedAmount}`)
+    this.log(`Fee: ${renderedFee}`)
 
     return CliUx.ux.confirm('Do you confirm (Y/N)?')
   }
