@@ -130,6 +130,8 @@ export class WalletNode {
     metrics,
     files,
     nodeClient,
+    customNetworkPath,
+    networkId,
   }: {
     pkg: Package
     dataDir?: string
@@ -139,6 +141,8 @@ export class WalletNode {
     metrics?: MetricsMonitor
     files: FileSystem
     nodeClient: RpcSocketClient | null
+    customNetworkPath?: string
+    networkId?: number
   }): Promise<WalletNode> {
     logger = logger.withTag('walletnode')
     dataDir = dataDir || DEFAULT_DATA_DIR
@@ -176,6 +180,8 @@ export class WalletNode {
       config,
       internal,
       files,
+      customNetworkPath,
+      networkId,
     )
 
     const network = new Network(networkDefinition)
@@ -428,6 +434,8 @@ export async function walletNode(options: {
   sdk: IronfishSdk
   connectNodeClient: boolean
   walletConfig: WalletConfig
+  customNetworkPath?: string
+  networkId?: number
 }): Promise<WalletNode> {
   let nodeClient: RpcSocketClient | null = null
 
@@ -467,6 +475,8 @@ Use 'ironfish config:set' to connect to a node via TCP, TLS, or IPC.\n`)
     logger: options.sdk.logger,
     metrics: options.sdk.metrics,
     dataDir: options.sdk.dataDir,
+    customNetworkPath: options.customNetworkPath,
+    networkId: options.networkId,
     nodeClient,
   })
 
