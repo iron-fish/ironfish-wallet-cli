@@ -104,12 +104,15 @@ export class StatusCommand extends IronfishCommand {
           header: 'Account ID',
         },
         headHash: {
+          get: (row) => row.head?.hash ?? 'NULL',
           header: 'Head Hash',
         },
         headInChain: {
+          get: (row) => row.head?.inChain ?? 'NULL',
           header: 'Head In Chain',
         },
         sequence: {
+          get: (row) => row.head?.sequence ?? 'NULL',
           header: 'Head Sequence',
         },
       },
