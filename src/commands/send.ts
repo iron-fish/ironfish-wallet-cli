@@ -8,37 +8,45 @@ import {
   isValidPublicAddress,
   RawTransaction,
   RawTransactionSerde,
-  RpcAsset,
+  TimeUtils,
   Transaction,
 } from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { IronFlag, RemoteFlags, ValueFlag, WalletRemoteFlags } from '../flags'
+import { HexFlag, IronFlag, RemoteFlags, ValueFlag } from '../flags'
+import { confirmOperation } from '../utils'
 import { selectAsset } from '../utils/asset'
-import { connectRpcWallet } from '../utils/clients'
 import { promptCurrency } from '../utils/currency'
+import { getExplorer } from '../utils/explorer'
 import { selectFee } from '../utils/fees'
-import { watchTransaction } from '../utils/transaction'
+import {
+  getSpendPostTimeInMs,
+  updateSpendPostTimeInMs,
+} from '../utils/spendPostTime'
+import {
+  displayTransactionSummary,
+  TransactionTimer,
+  watchTransaction,
+} from '../utils/transaction'
 
 export class Send extends IronfishCommand {
   static description = `Send coins to another account`
 
   static examples = [
-    '$ ironfishw send --amount 2 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed',
-    '$ ironfishw send --amount 2 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed --account otheraccount',
-    '$ ironfishw send --amount 2 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed --account otheraccount --memo "enjoy!"',
+    '$ ironfish wallet:send --amount 2.003 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed',
+    '$ ironfish wallet:send --amount 2.003 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed --account otheraccount',
+    '$ ironfish wallet:send --amount 2.003 --fee 0.00000001 --to 997c586852d1b12da499bcff53595ba37d04e4909dbdb1a75f3bfd90dd7212217a1c2c0da652d187fc52ed --account otheraccount --memo "enjoy!"',
   ]
 
   static flags = {
     ...RemoteFlags,
-    ...WalletRemoteFlags,
     account: Flags.string({
       char: 'f',
       description: 'The account to send money from',
     }),
     amount: ValueFlag({
       char: 'a',
-      description: 'Amount of coins to send',
+      description: 'The amount to send in the major denomination',
       flagName: 'amount',
     }),
     to: Flags.string({
@@ -80,7 +88,7 @@ export class Send extends IronfishCommand {
         'Minimum number of block confirmations needed to include a note. Set to 0 to include all blocks.',
       required: false,
     }),
-    assetId: Flags.string({
+    assetId: HexFlag({
       char: 'i',
       description: 'The identifier for the asset to use when sending',
     }),
@@ -88,6 +96,13 @@ export class Send extends IronfishCommand {
       default: false,
       description:
         'Return raw transaction. Use it to create a transaction but not post to the network',
+    }),
+    unsignedTransaction: Flags.boolean({
+      hidden: true,
+      default: false,
+      description:
+        'Return a serialized UnsignedTransaction. Use it to create a transaction and build proofs but not post to the network',
+      exclusive: ['rawTransaction'],
     }),
     offline: Flags.boolean({
       default: false,
@@ -106,9 +121,7 @@ export class Send extends IronfishCommand {
     let to = flags.to?.trim()
     let from = flags.account?.trim()
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: !flags.offline,
-    })
+    const client = await this.sdk.connectRpc()
 
     if (!flags.offline) {
       const status = await client.wallet.getNodeStatus()
@@ -153,7 +166,7 @@ export class Send extends IronfishCommand {
       )
 
       if (error) {
-        this.error(`${error.reason}`)
+        this.error(`${error.message}`)
       }
 
       amount = parsedAmount
@@ -163,7 +176,7 @@ export class Send extends IronfishCommand {
       amount = await promptCurrency({
         client: client,
         required: true,
-        text: 'Enter the amount',
+        text: 'Enter the amount in the major denomination',
         minimum: 1n,
         logger: this.logger,
         assetId: assetId,
@@ -181,7 +194,7 @@ export class Send extends IronfishCommand {
       if (!response.content.account) {
         this.error(
           `No account is currently active.
-           Use ironfishw create <name> to first create an account`,
+            Use ironfish wallet:create <name> to first create an account`,
         )
       }
 
@@ -245,18 +258,43 @@ export class Send extends IronfishCommand {
     if (flags.rawTransaction) {
       this.log('Raw Transaction')
       this.log(RawTransactionSerde.serialize(raw).toString('hex'))
-      this.log(`Run "ironfishw post" to post the raw transaction. `)
+      this.log(`Run "ironfish wallet:post" to post the raw transaction. `)
       this.exit(0)
     }
 
-    if (
-      !flags.confirm &&
-      !(await this.confirm(assetId, amount, raw.fee, from, to, memo))
-    ) {
-      this.error('Transaction aborted.')
+    if (flags.unsignedTransaction) {
+      const response = await client.wallet.buildTransaction({
+        account: from,
+        rawTransaction: RawTransactionSerde.serialize(raw).toString('hex'),
+      })
+      this.log('Unsigned Transaction')
+      this.log(response.content.unsignedTransaction)
+      this.exit(0)
     }
 
-    CliUx.ux.action.start('Sending the transaction')
+    displayTransactionSummary(raw, assetData, amount, from, to, memo)
+
+    const spendPostTime = getSpendPostTimeInMs(this.sdk)
+
+    const transactionTimer = new TransactionTimer(spendPostTime, raw)
+
+    if (spendPostTime > 0) {
+      this.log(
+        `Time to send: ${TimeUtils.renderSpan(
+          transactionTimer.getEstimateInMs(),
+          {
+            hideMilliseconds: true,
+          },
+        )}`,
+      )
+    }
+
+    await confirmOperation({
+      confirm: flags.confirm,
+      cancelledMessage: 'Transaction aborted.',
+    })
+
+    transactionTimer.start()
 
     const response = await client.wallet.postTransaction({
       transaction: RawTransactionSerde.serialize(raw).toString('hex'),
@@ -266,7 +304,23 @@ export class Send extends IronfishCommand {
     const bytes = Buffer.from(response.content.transaction, 'hex')
     const transaction = new Transaction(bytes)
 
-    CliUx.ux.action.stop()
+    transactionTimer.end()
+
+    this.log(
+      `Sending took ${TimeUtils.renderSpan(
+        transactionTimer.getEndTime() - transactionTimer.getStartTime(),
+        {
+          hideMilliseconds: true,
+        },
+      )}`,
+    )
+
+    await updateSpendPostTimeInMs(
+      this.sdk,
+      raw,
+      transactionTimer.getStartTime(),
+      transactionTimer.getEndTime(),
+    )
 
     if (response.content.accepted === false) {
       this.warn(
@@ -295,11 +349,17 @@ export class Send extends IronfishCommand {
     this.log(`Hash: ${transaction.hash().toString('hex')}`)
     this.log(`Fee: ${renderedFee}`)
     this.log(`Memo: ${memo}`)
-    this.log(
-      `\nIf the transaction is mined, it will appear here https://explorer.ironfish.network/transaction/${transaction
-        .hash()
-        .toString('hex')}`,
+
+    const networkId = (await client.chain.getNetworkInfo()).content.networkId
+    const transactionUrl = getExplorer(networkId)?.getTransactionUrl(
+      transaction.hash().toString('hex'),
     )
+
+    if (transactionUrl) {
+      this.log(
+        `\nIf the transaction is mined, it will appear here: ${transactionUrl}`,
+      )
+    }
 
     if (flags.watch) {
       this.log('')
@@ -311,28 +371,5 @@ export class Send extends IronfishCommand {
         hash: transaction.hash().toString('hex'),
       })
     }
-  }
-
-  async confirm(
-    assetId: string,
-    amount: bigint,
-    fee: bigint,
-    from: string,
-    to: string,
-    memo: string,
-    assetData?: RpcAsset,
-  ): Promise<boolean> {
-    const renderedAmount = CurrencyUtils.render(
-      amount,
-      true,
-      assetId,
-      assetData?.verification,
-    )
-    const renderedFee = CurrencyUtils.render(fee, true)
-    this.log(
-      `You are about to send a transaction: ${renderedAmount} plus a transaction fee of ${renderedFee} to ${to} from the account "${from}" with the memo "${memo}"`,
-    )
-
-    return await CliUx.ux.confirm('Do you confirm (Y/N)?')
   }
 }

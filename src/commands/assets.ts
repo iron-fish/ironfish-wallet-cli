@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
+  Asset,
   ASSET_ID_LENGTH,
   ASSET_METADATA_LENGTH,
   ASSET_NAME_LENGTH,
@@ -11,8 +12,7 @@ import { BufferUtils } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { renderAssetNameFromHex } from '../utils'
-import { connectRpcWallet } from '../utils/clients'
+import { renderAssetWithVerificationStatus } from '../utils'
 import { TableCols } from '../utils/table'
 
 const MAX_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH + 1
@@ -34,7 +34,6 @@ export class AssetsCommand extends IronfishCommand {
   static args = [
     {
       name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
       required: false,
       description: 'Name of the account',
     },
@@ -44,9 +43,7 @@ export class AssetsCommand extends IronfishCommand {
     const { flags, args } = await this.parse(AssetsCommand)
     const account = args.account as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.sdk.connectRpc()
     const response = client.wallet.getAssets({
       account,
     })
@@ -67,10 +64,13 @@ export class AssetsCommand extends IronfishCommand {
             header: 'Name',
             width: assetNameWidth,
             get: (row) =>
-              renderAssetNameFromHex(row.name, {
-                verification: row.verification,
-                outputType: flags.output,
-              }),
+              renderAssetWithVerificationStatus(
+                BufferUtils.toHuman(Buffer.from(row.name, 'hex')),
+                {
+                  verification: row.verification,
+                  outputType: flags.output,
+                },
+              ),
           }),
           id: {
             header: 'ID',
@@ -81,9 +81,8 @@ export class AssetsCommand extends IronfishCommand {
             width: assetMetadataWidth,
             get: (row) => BufferUtils.toHuman(Buffer.from(row.metadata, 'hex')),
           }),
-          status: {
-            header: 'Status',
-            minWidth: 12,
+          createdTransactionHash: {
+            header: 'Created Transaction Hash',
           },
           supply: {
             header: 'Supply',
@@ -93,6 +92,18 @@ export class AssetsCommand extends IronfishCommand {
           creator: {
             header: 'Creator',
             minWidth: PUBLIC_ADDRESS_LENGTH + 1,
+            get: (row) =>
+              row.id === Asset.nativeId().toString('hex')
+                ? BufferUtils.toHuman(Buffer.from(row.creator, 'hex'))
+                : row.creator,
+          },
+          owner: {
+            header: 'Owner',
+            minWidth: PUBLIC_ADDRESS_LENGTH + 1,
+            get: (row) =>
+              row.id === Asset.nativeId().toString('hex')
+                ? BufferUtils.toHuman(Buffer.from(row.owner, 'hex'))
+                : row.owner,
           },
         },
         {

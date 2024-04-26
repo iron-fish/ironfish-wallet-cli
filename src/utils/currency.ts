@@ -12,6 +12,10 @@ import {
 } from '@ironfish/sdk'
 import { CliUx } from '@oclif/core'
 
+/**
+ * This prompts the user to enter an amount of currency in the major
+ * denomination and returns the value in the minor denomination
+ */
 export async function promptCurrency(options: {
   client: Pick<RpcClient, 'wallet'>
   text: string
@@ -74,7 +78,7 @@ export async function promptCurrency(options: {
     )
 
     if (error) {
-      options.logger.error(`Error: ${error.reason}`)
+      options.logger.error(`Error: ${error.message}`)
       continue
     }
 

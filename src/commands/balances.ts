@@ -1,12 +1,16 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { CurrencyUtils, GetBalancesResponse, RpcAsset } from '@ironfish/sdk'
+import {
+  BufferUtils,
+  CurrencyUtils,
+  GetBalancesResponse,
+  RpcAsset,
+} from '@ironfish/sdk'
 import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { compareAssets, renderAssetNameFromHex } from '../utils'
-import { connectRpcWallet } from '../utils/clients'
+import { compareAssets, renderAssetWithVerificationStatus } from '../utils'
 
 type AssetBalancePairs = {
   asset: RpcAsset
@@ -32,7 +36,6 @@ export class BalancesCommand extends IronfishCommand {
   static args = [
     {
       name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
       required: false,
       description: 'Name of the account to get balances for',
     },
@@ -40,9 +43,7 @@ export class BalancesCommand extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags, args } = await this.parse(BalancesCommand)
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.sdk.connectRpc()
 
     const account = args.account as string | undefined
     const response = await client.wallet.getAccountBalances({
@@ -50,7 +51,9 @@ export class BalancesCommand extends IronfishCommand {
       confirmations: flags.confirmations,
     })
     this.log(`Account: ${response.content.account}`)
+
     const assetBalancePairs: AssetBalancePairs[] = []
+
     for (const balance of response.content.balances) {
       const asset = await client.wallet.getAsset({
         account,
@@ -63,16 +66,20 @@ export class BalancesCommand extends IronfishCommand {
         asset: asset.content,
       })
     }
+
     let columns: CliUx.Table.table.Columns<AssetBalancePairs> = {
       assetName: {
         header: 'Asset Name',
         get: ({ asset }) =>
-          renderAssetNameFromHex(asset.name, {
-            verification: asset.verification,
-            outputType: flags.output,
-          }),
+          renderAssetWithVerificationStatus(
+            BufferUtils.toHuman(Buffer.from(asset.name, 'hex')),
+            {
+              verification: asset.verification,
+              outputType: flags.output,
+            },
+          ),
       },
-      assetId: {
+      'asset.id': {
         header: 'Asset Id',
         get: ({ asset }) => asset.id,
       },
