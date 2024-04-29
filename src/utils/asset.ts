@@ -6,9 +6,11 @@ import { Asset } from '@ironfish/rust-nodejs'
 import {
   BufferUtils,
   CurrencyUtils,
+  RPC_ERROR_CODES,
   RpcAsset,
   RpcAssetVerification,
   RpcClient,
+  RpcRequestError,
   StringUtils,
 } from '@ironfish/sdk'
 import chalk from 'chalk'
@@ -39,14 +41,6 @@ export function renderAssetWithVerificationStatus(
     default:
       return name
   }
-}
-
-export function renderAssetNameFromHex(
-  hexName: string,
-  options?: RenderAssetNameOptions,
-): string {
-  const name = BufferUtils.toHuman(Buffer.from(hexName, 'hex'))
-  return renderAssetWithVerificationStatus(name, options)
 }
 
 export function compareAssets(
@@ -100,8 +94,9 @@ export async function selectAsset(
   const assetLookup = await getAssetsByIDs(
     client,
     balances.map((b) => b.assetId),
+    account,
+    options.confirmations,
   )
-
   if (!options.showNativeAsset) {
     balances = balances.filter(
       (b) => b.assetId !== Asset.nativeId().toString('hex'),
@@ -135,6 +130,7 @@ export async function selectAsset(
     const assetName = BufferUtils.toHuman(
       Buffer.from(assetLookup[balance.assetId].name, 'hex'),
     )
+
     const renderedAvailable = CurrencyUtils.render(
       balance.available,
       false,
@@ -168,13 +164,47 @@ export async function selectAsset(
   return response.asset
 }
 
+export async function getAssetVerificationByIds(
+  client: Pick<RpcClient, 'wallet'>,
+  assetIds: string[],
+  account: string | undefined,
+  confirmations: number | undefined,
+): Promise<{ [key: string]: RpcAssetVerification }> {
+  assetIds = [...new Set(assetIds)]
+  const assets = await Promise.all(
+    assetIds.map((id) =>
+      client.wallet.getAsset({ id, account, confirmations }).catch((e) => {
+        if (
+          e instanceof RpcRequestError &&
+          e.code === RPC_ERROR_CODES.NOT_FOUND.valueOf()
+        ) {
+          return undefined
+        } else {
+          throw e
+        }
+      }),
+    ),
+  )
+  const assetLookup: { [key: string]: RpcAssetVerification } = {}
+  assets.forEach((asset) => {
+    if (asset) {
+      assetLookup[asset.content.id] = asset.content.verification
+    }
+  })
+  return assetLookup
+}
+
 export async function getAssetsByIDs(
   client: Pick<RpcClient, 'wallet'>,
   assetIds: string[],
+  account: string | undefined,
+  confirmations: number | undefined,
 ): Promise<{ [key: string]: RpcAsset }> {
   assetIds = [...new Set(assetIds)]
   const assets = await Promise.all(
-    assetIds.map((id) => client.wallet.getAsset({ id })),
+    assetIds.map((id) =>
+      client.wallet.getAsset({ id, account, confirmations }),
+    ),
   )
   const assetLookup: { [key: string]: RpcAsset } = {}
   assets.forEach((asset) => {

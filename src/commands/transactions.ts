@@ -14,7 +14,6 @@ import { CliUx, Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
 import { getAssetsByIDs } from '../utils'
-import { connectRpcWallet } from '../utils/clients'
 import { Format, TableCols } from '../utils/table'
 
 const { sort: _, ...tableFlags } = CliUx.ux.table.flags()
@@ -51,7 +50,6 @@ export class TransactionsCommand extends IronfishCommand {
   static args = [
     {
       name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
       required: false,
       description: 'Name of the account',
     },
@@ -70,9 +68,7 @@ export class TransactionsCommand extends IronfishCommand {
         ? Format.yaml
         : Format.cli
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.sdk.connectRpc()
     const response = client.wallet.getAccountTransactionsStream({
       account,
       hash: flags.hash,
@@ -95,6 +91,8 @@ export class TransactionsCommand extends IronfishCommand {
         const assetLookup = await getAssetsByIDs(
           client,
           transaction.notes.map((n) => n.assetId) || [],
+          account,
+          flags.confirmations,
         )
         transactionRows = this.getTransactionRowsByNote(
           assetLookup,
@@ -105,6 +103,8 @@ export class TransactionsCommand extends IronfishCommand {
         const assetLookup = await getAssetsByIDs(
           client,
           transaction.assetBalanceDeltas.map((d) => d.assetId),
+          account,
+          flags.confirmations,
         )
         transactionRows = this.getTransactionRows(
           assetLookup,
@@ -147,8 +147,7 @@ export class TransactionsCommand extends IronfishCommand {
     let assetCount = assetBalanceDeltas.length
 
     for (const [index, { assetId, delta }] of assetBalanceDeltas.entries()) {
-      const assetName = assetLookup[assetId].name
-
+      const asset = assetLookup[assetId]
       let amount = BigInt(delta)
 
       if (assetId === Asset.nativeId().toString('hex')) {
@@ -169,10 +168,10 @@ export class TransactionsCommand extends IronfishCommand {
       const transactionRow = {
         group,
         assetId,
-        assetName,
+        assetName: asset.name,
         amount,
-        assetDecimals: assetLookup[assetId].verification.decimals,
-        assetSymbol: assetLookup[assetId].verification.symbol,
+        assetDecimals: asset.verification.decimals,
+        assetSymbol: asset.verification.symbol,
       }
 
       // include full transaction details in first row or non-cli-formatted output
@@ -217,6 +216,7 @@ export class TransactionsCommand extends IronfishCommand {
       const assetSymbol = assetLookup[note.assetId].verification.symbol
       const sender = note.sender
       const recipient = note.owner
+      const memo = note.memo
 
       const group = this.getRowGroup(index, noteCount, transactionRows.length)
 
@@ -233,6 +233,7 @@ export class TransactionsCommand extends IronfishCommand {
           feePaid,
           sender,
           recipient,
+          memo,
         })
       } else {
         transactionRows.push({
@@ -244,6 +245,7 @@ export class TransactionsCommand extends IronfishCommand {
           amount,
           sender,
           recipient,
+          memo,
         })
       }
     }
@@ -327,6 +329,9 @@ export class TransactionsCommand extends IronfishCommand {
         },
         recipient: {
           header: 'Recipient Address',
+        },
+        memo: {
+          header: 'Memo',
         },
       }
     }
