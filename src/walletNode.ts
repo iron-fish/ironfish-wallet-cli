@@ -198,6 +198,8 @@ export class WalletNode {
       workerPool,
       consensus: network.consensus,
       nodeClient,
+      chain: null,
+      networkId: network.id,
     })
 
     return new WalletNode({
@@ -323,7 +325,7 @@ export class WalletNode {
     this.logger.info('Successfully connected to node')
 
     if (startWallet) {
-      await this.wallet.start()
+      this.wallet.start()
     }
   }
 
@@ -463,7 +465,7 @@ export async function walletNode(options: {
     } else {
       throw new Error(`Cannot start the wallet: no node connection configuration specified.
 
-Use 'ironfish config:set' to connect to a node via TCP, TLS, or IPC.\n`)
+Use 'ironfishw config:set' to connect to a node via TCP, TLS, or IPC.\n`)
     }
   }
 

@@ -2,22 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { CliUx } from '@oclif/core'
+import { Args } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { checkWalletUnlocked, inputPrompt } from '../ui'
 
 export class CreateCommand extends IronfishCommand {
-  static description = `Create a new account for sending and receiving coins`
+  static description = `create a new account`
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+  static args = {
+    name: Args.string({
       required: false,
       description: 'Name of the account',
-    },
-  ]
+    }),
+  }
 
   static flags = {
     ...RemoteFlags,
@@ -25,17 +23,13 @@ export class CreateCommand extends IronfishCommand {
 
   async start(): Promise<void> {
     const { args } = await this.parse(CreateCommand)
-    let name = args.account as string
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
 
+    let name = args.name
     if (!name) {
-      name = await CliUx.ux.prompt('Enter the name of the account', {
-        required: true,
-      })
+      name = await inputPrompt('Enter the name of the account', true)
     }
-
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
 
     this.log(`Creating account ${name}`)
     const result = await client.wallet.createAccount({ name })
@@ -47,7 +41,11 @@ export class CreateCommand extends IronfishCommand {
     if (isDefaultAccount) {
       this.log(`The default account is now: ${name}`)
     } else {
-      this.log(`Run "ironfishw use ${name}" to set the account as default`)
+      this.log(
+        `Run "ironfish wallet:use ${name}" to set the account as default`,
+      )
     }
+
+    this.exit(0)
   }
 }

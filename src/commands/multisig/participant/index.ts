@@ -5,6 +5,7 @@ import { Flags } from '@oclif/core'
 import inquirer from 'inquirer'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
+import * as ui from '../../../ui'
 
 export class MultisigIdentity extends IronfishCommand {
   static description = `Retrieve a multisig participant identity from a name`
@@ -20,7 +21,8 @@ export class MultisigIdentity extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(MultisigIdentity)
 
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
 
     if (flags.name) {
       const response = await client.wallet.multisig.getIdentity({

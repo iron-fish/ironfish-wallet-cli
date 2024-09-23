@@ -1,14 +1,29 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { PromiseUtils } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import {
+  AccountFormat,
+  encodeAccountImport,
+  RPC_ERROR_CODES,
+  RpcRequestError,
+} from '@ironfish/sdk'
+import { Args, Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { checkWalletUnlocked, inputPrompt } from '../ui'
+import { importFile, importPipe, longPrompt } from '../ui/longPrompt'
+import { Ledger } from '../utils/ledger'
 
 export class ImportCommand extends IronfishCommand {
-  static description = `Import an account`
+  static description = `import an account`
+
+  static args = {
+    blob: Args.string({
+      required: false,
+      description:
+        'The copy-pasted output of wallet:export; or, a raw spending key',
+    }),
+  }
 
   static flags = {
     ...RemoteFlags,
@@ -18,42 +33,61 @@ export class ImportCommand extends IronfishCommand {
       description: 'Rescan the blockchain once the account is imported',
     }),
     path: Flags.string({
-      description: 'the path to the file containing the account to import',
+      description: 'The path to the file containing the account to import',
     }),
     name: Flags.string({
-      description: 'the name to use for the account',
+      description: 'Name to use for the account',
+    }),
+    createdAt: Flags.integer({
+      description:
+        'Block sequence to begin scanning from for the imported account',
+    }),
+    ledger: Flags.boolean({
+      description: 'Import a view-only account from a ledger device',
+      default: false,
+      exclusive: ['path'],
     }),
   }
 
-  static args = [
-    {
-      name: 'blob',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
-      required: false,
-      description:
-        'The copy-pasted output of wallet:export; or, a raw spending key',
-    },
-  ]
-
   async start(): Promise<void> {
     const { flags, args } = await this.parse(ImportCommand)
-    const blob = args.blob as string | undefined
+    const { blob } = args
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
 
     let account: string
+
+    if (
+      blob &&
+      blob.length !== 0 &&
+      ((flags.path && flags.path.length !== 0) || flags.ledger)
+    ) {
+      this.error(
+        `Your command includes an unexpected argument. Please pass only 1 of the following:
+    1. the output of wallet:export OR
+    2. --path to import an account from a file OR
+    3. --ledger to import an account from a ledger device`,
+      )
+    }
+
     if (blob) {
       account = blob
+    } else if (flags.ledger) {
+      account = await this.importLedger()
     } else if (flags.path) {
-      account = await this.importFile(flags.path)
+      account = await importFile(this.sdk.fileSystem, flags.path)
     } else if (process.stdin.isTTY) {
-      account = await this.importTTY()
+      account = await longPrompt(
+        'Paste the output of wallet:export, or your spending key',
+        {
+          required: true,
+        },
+      )
     } else if (!process.stdin.isTTY) {
-      account = await this.importPipe()
+      account = await importPipe()
     } else {
-      CliUx.ux.error(`Invalid import type`)
+      ux.error(`Invalid import type`)
     }
 
     const accountsResponse = await client.wallet.getAccounts()
@@ -65,11 +99,9 @@ export class ImportCommand extends IronfishCommand {
       this.log()
       this.log(`Found existing account with name '${flags.name}'`)
 
-      const name = await CliUx.ux.prompt(
+      const name = await inputPrompt(
         'Enter a different name for the account',
-        {
-          required: true,
-        },
+        true,
       )
       if (name === flags.name) {
         this.error(`Entered the same name: '${name}'`)
@@ -78,11 +110,48 @@ export class ImportCommand extends IronfishCommand {
       flags.name = name
     }
 
-    const result = await client.wallet.importAccount({
-      account,
-      rescan: flags.rescan,
-      name: flags.name,
-    })
+    let result
+
+    while (!result) {
+      try {
+        result = await client.wallet.importAccount({
+          account,
+          rescan: flags.rescan,
+          name: flags.name,
+          createdAt: flags.createdAt,
+        })
+      } catch (e) {
+        if (
+          e instanceof RpcRequestError &&
+          (e.code === RPC_ERROR_CODES.DUPLICATE_ACCOUNT_NAME.toString() ||
+            e.code ===
+              RPC_ERROR_CODES.IMPORT_ACCOUNT_NAME_REQUIRED.toString() ||
+            e.code === RPC_ERROR_CODES.DUPLICATE_IDENTITY_NAME.toString())
+        ) {
+          const message = 'Enter a name for the account'
+
+          if (e.code === RPC_ERROR_CODES.DUPLICATE_ACCOUNT_NAME.toString()) {
+            this.log()
+            this.log(e.codeMessage)
+          }
+
+          if (e.code === RPC_ERROR_CODES.DUPLICATE_IDENTITY_NAME.toString()) {
+            this.log()
+            this.log(e.codeMessage)
+          }
+
+          const name = await inputPrompt(message, true)
+          if (name === flags.name) {
+            this.error(`Entered the same name: '${name}'`)
+          }
+
+          flags.name = name
+          continue
+        }
+
+        throw e
+      }
+    }
 
     const { name, isDefaultAccount } = result.content
     this.log(`Account ${name} imported.`)
@@ -90,43 +159,24 @@ export class ImportCommand extends IronfishCommand {
     if (isDefaultAccount) {
       this.log(`The default account is now: ${name}`)
     } else {
-      this.log(`Run "ironfishw use ${name}" to set the account as default`)
+      this.log(
+        `Run "ironfish wallet:use ${name}" to set the account as default`,
+      )
     }
   }
 
-  async importFile(path: string): Promise<string> {
-    const resolved = this.sdk.fileSystem.resolve(path)
-    const data = await this.sdk.fileSystem.readFile(resolved)
-    return data.trim()
-  }
-
-  async importPipe(): Promise<string> {
-    let data = ''
-
-    const onData = (dataIn: string): void => {
-      data += dataIn.trim()
+  async importLedger(): Promise<string> {
+    try {
+      const ledger = new Ledger(this.logger)
+      await ledger.connect()
+      const account = await ledger.importAccount()
+      return encodeAccountImport(account, AccountFormat.Base64Json)
+    } catch (e) {
+      if (e instanceof Error) {
+        this.error(e.message)
+      } else {
+        this.error('Unknown error while importing account from ledger device.')
+      }
     }
-
-    process.stdin.setEncoding('utf8')
-    process.stdin.on('data', onData)
-
-    while (!process.stdin.readableEnded) {
-      await PromiseUtils.sleep(100)
-    }
-
-    process.stdin.off('data', onData)
-
-    return data
-  }
-
-  async importTTY(): Promise<string> {
-    const userInput = await CliUx.ux.prompt(
-      'Paste the output of wallet:export, or your spending key',
-      {
-        required: true,
-      },
-    )
-
-    return userInput.trim()
   }
 }

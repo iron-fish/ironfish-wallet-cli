@@ -9,10 +9,11 @@ import {
   PUBLIC_ADDRESS_LENGTH,
 } from '@ironfish/rust-nodejs'
 import { BufferUtils } from '@ironfish/sdk'
-import { CliUx } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { renderAssetWithVerificationStatus } from '../utils'
+import { checkWalletUnlocked, table, TableFlags } from '../ui'
+import { renderAssetWithVerificationStatus, useAccount } from '../utils'
 import { TableCols } from '../utils/table'
 
 const MAX_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH + 1
@@ -21,29 +22,26 @@ const MIN_ASSET_METADATA_COLUMN_WIDTH = ASSET_METADATA_LENGTH / 2 + 1
 const MAX_ASSET_NAME_COLUMN_WIDTH = ASSET_NAME_LENGTH + 1
 const MIN_ASSET_NAME_COLUMN_WIDTH = ASSET_NAME_LENGTH / 2 + 1
 
-const { ...tableFlags } = CliUx.ux.table.flags()
-
 export class AssetsCommand extends IronfishCommand {
-  static description = `Display the wallet's assets`
+  static description = `list the account's assets`
 
   static flags = {
     ...RemoteFlags,
-    ...tableFlags,
+    ...TableFlags,
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to get assets for',
+    }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      required: false,
-      description: 'Name of the account',
-    },
-  ]
-
   async start(): Promise<void> {
-    const { flags, args } = await this.parse(AssetsCommand)
-    const account = args.account as string | undefined
+    const { flags } = await this.parse(AssetsCommand)
 
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
+
+    const account = await useAccount(client, flags.account)
+
     const response = client.wallet.getAssets({
       account,
     })
@@ -57,7 +55,7 @@ export class AssetsCommand extends IronfishCommand {
     let showHeader = !flags['no-header']
 
     for await (const asset of response.contentStream()) {
-      CliUx.ux.table(
+      table(
         [asset],
         {
           name: TableCols.fixedWidth({
@@ -75,6 +73,7 @@ export class AssetsCommand extends IronfishCommand {
           id: {
             header: 'ID',
             minWidth: ASSET_ID_LENGTH + 1,
+            get: (row) => row.id,
           },
           metadata: TableCols.fixedWidth({
             header: 'Metadata',
@@ -83,6 +82,7 @@ export class AssetsCommand extends IronfishCommand {
           }),
           createdTransactionHash: {
             header: 'Created Transaction Hash',
+            get: (row) => row.createdTransactionHash,
           },
           supply: {
             header: 'Supply',

@@ -1,140 +1,72 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { PromiseUtils, RpcAccountStatus } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
-import { FlagInput } from '@oclif/core/lib/interfaces'
-import blessed from 'blessed'
+import { MathUtils, TimeUtils } from '@ironfish/sdk'
 import { IronfishCommand } from '../command'
-import { RemoteFlags } from '../flags'
-import { connectRpcWallet, RpcClientWallet } from '../utils/clients'
+import { JsonFlags, RemoteFlags } from '../flags'
+import * as ui from '../ui'
 
 export class StatusCommand extends IronfishCommand {
-  static description = `Get status of an account`
+  static description = `show wallet information`
+  static enableJsonFlag = true
 
   static flags = {
     ...RemoteFlags,
-    ...CliUx.ux.table.flags(),
-    follow: Flags.boolean({
-      char: 'f',
-      default: false,
-      description: 'Follow the status of the node live',
-    }),
+    ...JsonFlags,
   }
 
-  async start(): Promise<void> {
-    const { args, flags } = await this.parse(StatusCommand)
-    const follow = flags.follow as boolean | undefined
-    const account = args.account as string | undefined
+  async start(): Promise<unknown> {
+    await this.parse(StatusCommand)
 
-    if (!follow) {
-      const client = await connectRpcWallet(this.sdk, this.walletConfig)
-      const accounts = await this.getAccountsStatus(client, account)
-      this.renderStatus(accounts, flags, this.log.bind(this))
-      this.exit(0)
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
+    const [nodeStatus, walletStatus] = await Promise.all([
+      client.wallet.getNodeStatus(),
+      client.wallet.getAccounts(),
+    ])
+
+    const status: Record<string, unknown> = {
+      Wallet: nodeStatus.content.accounts.enabled ? 'ENABLED' : 'DISABLED',
+      Accounts: walletStatus.content.accounts.length,
+      Head: nodeStatus.content.accounts.head.hash,
+      Sequence: nodeStatus.content.accounts.head.sequence,
+      Scanner: 'IDLE',
     }
 
-    // Console log will create display issues with Blessed
-    this.logger.pauseLogs()
+    if (nodeStatus.content.accounts.scanning) {
+      const progress = MathUtils.round(
+        (nodeStatus.content.accounts.scanning.sequence /
+          nodeStatus.content.accounts.scanning.endSequence) *
+          100,
+        2,
+      )
 
-    const screen = blessed.screen({ smartCSR: true, fullUnicode: true })
-    const statusText = blessed.text()
-    screen.append(statusText)
+      const duration =
+        Date.now() - nodeStatus.content.accounts.scanning.startedAt
+      const speed = MathUtils.round(
+        nodeStatus.content.accounts.scanning.speed,
+        2,
+      )
 
-    let previousResponse = ''
-
-    while (true) {
-      const connected = await this.sdk.client.tryConnect()
-
-      if (!connected) {
-        statusText.clearBaseLine(0)
-
-        if (previousResponse) {
-          statusText.setContent(previousResponse)
-
-          statusText.insertTop('Node: Disconnected \n')
-        } else {
-          statusText.setContent('Node: STOPPED')
-        }
-
-        screen.render()
-        await PromiseUtils.sleep(1000)
-        continue
-      }
-
-      statusText.clearBaseLine(0)
-
-      const client = await connectRpcWallet(this.sdk, this.walletConfig)
-
-      const accounts = await this.getAccountsStatus(client, account)
-
-      let tableBody = ''
-
-      // This is a workaround to display the CliUX.Table output in Blessed.
-      // CliUX.Table does not return a string and instead prints to a custom function
-
-      const logTable = (s: string) => {
-        tableBody += s + '\n'
-      }
-
-      this.renderStatus(accounts, flags, logTable)
-
-      statusText.setContent(tableBody)
-
-      previousResponse = tableBody
-
-      screen.render()
-      await PromiseUtils.sleep(1000)
-    }
-  }
-
-  renderStatus(
-    accounts: RpcAccountStatus[],
-    flags: FlagInput,
-    printLine: (s: string) => void,
-  ): void {
-    CliUx.ux.table(
-      accounts,
-      {
-        name: {
-          header: 'Account Name',
-          minWidth: 11,
-        },
-        id: {
-          header: 'Account ID',
-        },
-        headHash: {
-          get: (row) => row.head?.hash ?? 'NULL',
-          header: 'Head Hash',
-        },
-        headInChain: {
-          get: (row) => row.head?.inChain ?? 'NULL',
-          header: 'Head In Chain',
-        },
-        sequence: {
-          get: (row) => row.head?.sequence ?? 'NULL',
-          header: 'Head Sequence',
-        },
-      },
-      {
-        printLine,
-        ...flags,
-      },
-    )
-  }
-
-  async getAccountsStatus(
-    client: RpcClientWallet,
-    account?: string | undefined,
-  ): Promise<RpcAccountStatus[]> {
-    if (account) {
-      return await client.wallet
-        .getAccountStatus({ account })
-        .then((r) => [r.content.account])
+      status['Scanner'] = 'SCANNING'
+      // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+      status['Scan Progress'] = progress + '%'
+      status['Scan Speed'] = `${speed} B/s`
+      status['Scan Duration'] = TimeUtils.renderSpan(duration, {
+        hideMilliseconds: true,
+        forceSecond: true,
+      })
+      status[
+        'Scan Block'
+      ] = `${nodeStatus.content.accounts.scanning.sequence} -> ${nodeStatus.content.accounts.scanning.endSequence}`
     }
 
-    return await client.wallet
-      .getAccountsStatus()
-      .then((r) => r.content.accounts)
+    this.log(ui.card(status))
+
+    return {
+      ...nodeStatus.content.accounts,
+      accountsCount: walletStatus.content.accounts.length,
+    }
   }
 }

@@ -3,10 +3,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { multisig } from '@ironfish/rust-nodejs'
 import { UnsignedTransaction } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
-import { longPrompt } from '../../../utils/longPrompt'
+import * as ui from '../../../ui'
 import { MultisigTransactionJson } from '../../../utils/multisig'
 import { renderUnsignedTransactionDetails } from '../../../utils/transaction'
 
@@ -16,15 +16,14 @@ export class CreateSignatureShareCommand extends IronfishCommand {
   static flags = {
     ...RemoteFlags,
     account: Flags.string({
-      char: 'f',
-      description: 'The account from which the signature share will be created',
-      required: false,
+      char: 'a',
+      description:
+        'Name of the account from which the signature share will be created',
     }),
     signingPackage: Flags.string({
       char: 's',
       description:
         'The signing package for which the signature share will be created',
-      required: false,
     }),
     confirm: Flags.boolean({
       default: false,
@@ -44,12 +43,13 @@ export class CreateSignatureShareCommand extends IronfishCommand {
     )
     const options = MultisigTransactionJson.resolveFlags(flags, loaded)
 
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
     let signingPackageString = options.signingPackage
     if (!signingPackageString) {
-      signingPackageString = await longPrompt('Enter the signing package')
+      signingPackageString = await ui.longPrompt('Enter the signing package')
     }
-
-    const client = await this.sdk.connectRpc()
 
     const signingPackage = new multisig.SigningPackage(
       Buffer.from(signingPackageString, 'hex'),
@@ -68,12 +68,7 @@ export class CreateSignatureShareCommand extends IronfishCommand {
     )
 
     if (!flags.confirm) {
-      const confirmed = await CliUx.ux.confirm(
-        'Confirm new signature share creation (Y/N)',
-      )
-      if (!confirmed) {
-        this.error('Creating signature share aborted')
-      }
+      await ui.confirmOrQuit('Confirm new signature share creation')
     }
 
     const signatureShareResponse =

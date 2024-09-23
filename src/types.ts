@@ -22,7 +22,8 @@ export interface ProgressBar {
 
 export type CommandFlags<T> = T extends Interfaces.Input<
   infer TFlags,
-  infer GFlags
+  infer GFlags,
+  infer AFlags
 >
-  ? Interfaces.ParserOutput<TFlags, GFlags>['flags']
+  ? Interfaces.ParserOutput<TFlags, GFlags, AFlags>['flags']
   : never

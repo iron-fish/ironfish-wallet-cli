@@ -3,24 +3,24 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
   CurrencyUtils,
+  DecimalUtils,
   DEFAULT_CONFIG_NAME,
+  DEFAULT_DATA_DIR,
   DEFAULT_USE_RPC_HTTP,
   DEFAULT_USE_RPC_IPC,
   DEFAULT_USE_RPC_TCP,
   DEFAULT_USE_RPC_TLS,
-  FixedNumberUtils,
+  LanguageKey,
   MAXIMUM_ORE_AMOUNT,
   MINIMUM_ORE_AMOUNT,
 } from '@ironfish/sdk'
-import { Flags, Interfaces } from '@oclif/core'
-
-type CompletableOptionFlag = Interfaces.CompletableOptionFlag<unknown>
+import { Flags } from '@oclif/core'
 
 export const VerboseFlagKey = 'verbose'
 export const ConfigFlagKey = 'config'
+export const JsonFlagKey = 'json'
 export const ColorFlagKey = 'color'
 export const DataDirFlagKey = 'datadir'
-export const NetworkIdFlagKey = 'networkId'
 export const RpcUseIpcFlagKey = 'rpc.ipc'
 export const RpcUseTcpFlagKey = 'rpc.tcp'
 export const RpcTcpHostFlagKey = 'rpc.tcp.host'
@@ -35,112 +35,102 @@ export const VerboseFlag = Flags.boolean({
   char: 'v',
   default: false,
   description: 'Set logging level to verbose',
+  helpGroup: 'GLOBAL',
+})
+
+export const JsonFlag = Flags.boolean({
+  default: false,
+  description: 'format output as json',
+  helpGroup: 'OUTPUT',
 })
 
 export const ColorFlag = Flags.boolean({
   default: true,
   allowNo: true,
   description: 'Should colorize the output',
+  helpGroup: 'OUTPUT',
 })
 
 export const ConfigFlag = Flags.string({
   default: DEFAULT_CONFIG_NAME,
   description: 'The name of the config file to use',
+  helpGroup: 'GLOBAL',
 })
 
 export const DataDirFlag = Flags.string({
   char: 'd',
-  default: '~/.ironfish-wallet',
+  default: DEFAULT_DATA_DIR,
   description: 'The path to the data dir',
-  env: 'IRONFISH_WALLET_DATA_DIR',
-})
-
-export const NetworkIdFlag = Flags.integer({
-  char: 'i',
-  default: undefined,
-  description: 'Network ID of an official Iron Fish network to connect to',
+  env: 'IRONFISH_DATA_DIR',
+  helpGroup: 'GLOBAL',
 })
 
 export const RpcUseIpcFlag = Flags.boolean({
   default: DEFAULT_USE_RPC_IPC,
   description: 'Connect to the RPC over IPC (default)',
+  helpGroup: 'RPC',
 })
 
 export const RpcUseTcpFlag = Flags.boolean({
   default: DEFAULT_USE_RPC_TCP,
   description: 'Connect to the RPC over TCP',
+  helpGroup: 'RPC',
 })
 
 export const RpcTcpHostFlag = Flags.string({
   description: 'The TCP host to listen for connections on',
+  helpGroup: 'RPC',
 })
 
 export const RpcTcpPortFlag = Flags.integer({
   description: 'The TCP port to listen for connections on',
+  helpGroup: 'RPC',
 })
 
 export const RpcTcpTlsFlag = Flags.boolean({
   default: DEFAULT_USE_RPC_TLS,
   description: 'Encrypt TCP connection to the RPC over TLS',
   allowNo: true,
+  helpGroup: 'RPC',
 })
 
 export const RpcAuthFlag = Flags.string({
   description: 'The RPC auth token',
+  helpGroup: 'RPC',
 })
 
 export const RpcHttpHostFlag = Flags.string({
   description: 'The HTTP host to listen for connections on',
+  helpGroup: 'RPC',
 })
 
 export const RpcHttpPortFlag = Flags.integer({
   description: 'The HTTP port to listen for connections on',
+  helpGroup: 'RPC',
 })
 
 export const RpcUseHttpFlag = Flags.boolean({
   default: DEFAULT_USE_RPC_HTTP,
   description: 'Connect to the RPC over HTTP',
   allowNo: true,
+  helpGroup: 'RPC',
 })
-
-const localFlags: Record<string, CompletableOptionFlag> = {}
-localFlags[VerboseFlagKey] = VerboseFlag as unknown as CompletableOptionFlag
-localFlags[ConfigFlagKey] = ConfigFlag as unknown as CompletableOptionFlag
-localFlags[DataDirFlagKey] = DataDirFlag as unknown as CompletableOptionFlag
-
-/**
- * These flags should usually be used on any command that starts a node,
- * or uses a database to execute the command
- */
-export const LocalFlags = localFlags
-
-const remoteFlags: Record<string, CompletableOptionFlag> = {}
-remoteFlags[VerboseFlagKey] = VerboseFlag as unknown as CompletableOptionFlag
-remoteFlags[ConfigFlagKey] = ConfigFlag as unknown as CompletableOptionFlag
-remoteFlags[DataDirFlagKey] = DataDirFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseTcpFlagKey] =
-  RpcUseTcpFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseIpcFlagKey] =
-  RpcUseIpcFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpHostFlagKey] =
-  RpcTcpHostFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpPortFlagKey] =
-  RpcTcpPortFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcHttpHostFlagKey] =
-  RpcHttpHostFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcHttpPortFlagKey] =
-  RpcHttpPortFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcUseHttpFlagKey] =
-  RpcUseHttpFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcTcpTlsFlagKey] =
-  RpcTcpTlsFlag as unknown as CompletableOptionFlag
-remoteFlags[RpcAuthFlagKey] = RpcAuthFlag as unknown as CompletableOptionFlag
 
 /**
  * These flags should usually be used on any command that uses an
  * RPC client to connect to a node to run the command
  */
-export const RemoteFlags = remoteFlags
+export const RemoteFlags = {
+  [RpcUseTcpFlagKey]: RpcUseTcpFlag,
+  [RpcUseIpcFlagKey]: RpcUseIpcFlag,
+  [RpcTcpHostFlagKey]: RpcTcpHostFlag,
+  [RpcTcpPortFlagKey]: RpcTcpPortFlag,
+  [RpcHttpHostFlagKey]: RpcHttpHostFlag,
+  [RpcHttpPortFlagKey]: RpcHttpPortFlag,
+  [RpcUseHttpFlagKey]: RpcUseHttpFlag,
+  [RpcTcpTlsFlagKey]: RpcTcpTlsFlag,
+  [RpcAuthFlagKey]: RpcAuthFlag,
+}
 
 export const WalletNodeUseIpcFlagKey = 'node.ipc'
 export const WalletNodeIpcPathFlagKey = 'node.ipc.path'
@@ -181,21 +171,23 @@ export const WalletNodeAuthFlag = Flags.string({
   description: 'The RPC authorization token for the wallet node client',
 })
 
-export const WalletRemoteFlags: Record<string, CompletableOptionFlag> = {
-  [WalletNodeUseIpcFlagKey]:
-    WalletNodeUseIpcFlag as unknown as CompletableOptionFlag,
-  [WalletNodeIpcPathFlagKey]:
-    WalletNodeIpcPathFlag as unknown as CompletableOptionFlag,
-  [WalletNodeUseTcpFlagKey]:
-    WalletNodeUseTcpFlag as unknown as CompletableOptionFlag,
-  [WalletNodeTcpHostFlagKey]:
-    WalletNodeTcpHostFlag as unknown as CompletableOptionFlag,
-  [WalletNodeTcpPortFlagKey]:
-    WalletNodeTcpPortFlag as unknown as CompletableOptionFlag,
-  [WalletNodeTcpTlsFlagKey]:
-    WalletNodeTcpTlsFlag as unknown as CompletableOptionFlag,
-  [WalletNodeAuthFlagKey]:
-    WalletNodeAuthFlag as unknown as CompletableOptionFlag,
+export const WalletRemoteFlags = {
+  [WalletNodeUseIpcFlagKey]: WalletNodeUseIpcFlag,
+  [WalletNodeIpcPathFlagKey]: WalletNodeIpcPathFlag,
+  [WalletNodeUseTcpFlagKey]: WalletNodeUseTcpFlag,
+  [WalletNodeTcpHostFlagKey]: WalletNodeTcpHostFlag,
+  [WalletNodeTcpPortFlagKey]: WalletNodeTcpPortFlag,
+  [WalletNodeTcpTlsFlagKey]: WalletNodeTcpTlsFlag,
+  [WalletNodeAuthFlagKey]: WalletNodeAuthFlag,
+}
+
+/**
+ * Flags to include if your command returns JSON
+ * you must also use enableJsonFlag = true
+ */
+export const JsonFlags = {
+  [JsonFlagKey]: JsonFlag,
+  [ColorFlagKey]: ColorFlag,
 }
 
 export type IronOpts = { minimum?: bigint; flagName: string }
@@ -242,7 +234,7 @@ export const ValueFlag = Flags.custom<string>({
   parse: async (input, _ctx, opts) => {
     return new Promise((resolve, reject) => {
       try {
-        FixedNumberUtils.tryDecodeDecimal(input)
+        DecimalUtils.tryDecode(input)
         resolve(input)
       } catch (e) {
         reject(new Error(`The number inputted for ${opts.name} is invalid.`))
@@ -261,5 +253,21 @@ export const HexFlag = Flags.custom<string>({
     }
 
     return Promise.resolve(input)
+  },
+})
+
+export const EnumLanguageKeyFlag = Flags.custom<
+  LanguageKey,
+  { choices: Array<LanguageKey> }
+>({
+  parse: async (input, _ctx, opts) => {
+    const parsed = opts.choices.find(
+      (valid) => valid.toLowerCase() === input.toLowerCase(),
+    )
+    if (parsed) {
+      return Promise.resolve(parsed)
+    } else {
+      return Promise.reject(new Error(`Invalid choice: ${input}`))
+    }
   },
 })

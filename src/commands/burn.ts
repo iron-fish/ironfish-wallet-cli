@@ -10,50 +10,49 @@ import {
   RpcAsset,
   Transaction,
 } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { IronFlag, RemoteFlags, ValueFlag } from '../flags'
-import { confirmOperation } from '../utils'
-import { selectAsset } from '../utils/asset'
+import * as ui from '../ui'
+import { useAccount } from '../utils'
 import { promptCurrency } from '../utils/currency'
+import { promptExpiration } from '../utils/expiration'
 import { getExplorer } from '../utils/explorer'
 import { selectFee } from '../utils/fees'
 import { watchTransaction } from '../utils/transaction'
 
 export class Burn extends IronfishCommand {
-  static description = 'Burn tokens and decrease supply for a given asset'
+  static description = `create a transaction to burn tokens
+
+This will destroy tokens and decrease supply for a given asset.`
 
   static examples = [
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
-    '$ ironfish wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
+    '$ ironfishw wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000',
+    '$ ironfishw wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount',
+    '$ ironfishw wallet:burn --assetId 618c098d8d008c9f78f6155947014901a019d9ec17160dc0f0d1bb1c764b29b4 --amount 1000 --account otheraccount --fee 0.00000001',
   ]
 
   static flags = {
     ...RemoteFlags,
     account: Flags.string({
-      char: 'f',
-      description: 'The account to burn from',
+      char: 'a',
+      description: 'Name of the account to burn from',
     }),
     fee: IronFlag({
-      char: 'o',
       description: 'The fee amount in IRON',
       minimum: 1n,
       flagName: 'fee',
     }),
     feeRate: IronFlag({
-      char: 'r',
       description: 'The fee rate amount in IRON/Kilobyte',
       minimum: 1n,
       flagName: 'fee rate',
     }),
     amount: ValueFlag({
-      char: 'a',
       description: 'Amount of coins to burn in the major denomination',
       flagName: 'amount',
     }),
     assetId: Flags.string({
-      char: 'i',
       description: 'Identifier for the asset',
     }),
     confirm: Flags.boolean({
@@ -61,15 +60,19 @@ export class Burn extends IronfishCommand {
       description: 'Confirm without asking',
     }),
     confirmations: Flags.integer({
-      char: 'c',
       description:
         'Minimum number of block confirmations needed to include a note. Set to 0 to include all blocks.',
-      required: false,
     }),
     rawTransaction: Flags.boolean({
       default: false,
       description:
         'Return raw transaction. Use it to create a transaction but not post to the network',
+    }),
+    unsignedTransaction: Flags.boolean({
+      default: false,
+      description:
+        'Return a serialized UnsignedTransaction. Use it to create a transaction and build proofs but not post to the network',
+      exclusive: ['rawTransaction'],
     }),
     expiration: Flags.integer({
       char: 'e',
@@ -88,7 +91,8 @@ export class Burn extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(Burn)
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
 
     if (!flags.offline) {
       const status = await client.wallet.getNodeStatus()
@@ -100,24 +104,12 @@ export class Burn extends IronfishCommand {
       }
     }
 
-    let account = flags.account
-    if (!account) {
-      const response = await client.wallet.getDefaultAccount()
-
-      if (!response.content.account) {
-        this.error(
-          `No account is currently active.
-           Use ironfish wallet:create <name> to first create an account`,
-        )
-      }
-
-      account = response.content.account.name
-    }
+    const account = await useAccount(client, flags.account)
 
     let assetId = flags.assetId
 
     if (assetId == null) {
-      const asset = await selectAsset(client, account, {
+      const asset = await ui.assetPrompt(client, account, {
         action: 'burn',
         showNativeAsset: false,
         showNonCreatorAsset: true,
@@ -171,6 +163,22 @@ export class Burn extends IronfishCommand {
       })
     }
 
+    let expiration = flags.expiration
+    if (
+      (flags.rawTransaction || flags.unsignedTransaction) &&
+      expiration === undefined
+    ) {
+      expiration = await promptExpiration({
+        logger: this.logger,
+        client: client,
+      })
+    }
+
+    if (expiration !== undefined && expiration < 0) {
+      this.log('Expiration sequence must be non-negative')
+      this.exit(1)
+    }
+
     const params: CreateTransactionRequest = {
       account,
       outputs: [],
@@ -208,9 +216,19 @@ export class Burn extends IronfishCommand {
       this.exit(0)
     }
 
+    if (flags.unsignedTransaction) {
+      const response = await client.wallet.buildTransaction({
+        account,
+        rawTransaction: RawTransactionSerde.serialize(raw).toString('hex'),
+      })
+      this.log('Unsigned Transaction')
+      this.log(response.content.unsignedTransaction)
+      this.exit(0)
+    }
+
     await this.confirm(assetData, amount, raw.fee, account, flags.confirm)
 
-    CliUx.ux.action.start('Sending the transaction')
+    ux.action.start('Sending the transaction')
 
     const response = await client.wallet.postTransaction({
       transaction: RawTransactionSerde.serialize(raw).toString('hex'),
@@ -220,7 +238,7 @@ export class Burn extends IronfishCommand {
     const bytes = Buffer.from(response.content.transaction, 'hex')
     const transaction = new Transaction(bytes)
 
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
     if (response.content.accepted === false) {
       this.warn(
@@ -247,12 +265,17 @@ export class Burn extends IronfishCommand {
     )
 
     this.log(`Burned asset ${assetName} from ${account}`)
-    this.log(`Asset Identifier: ${assetId}`)
-    this.log(`Amount: ${renderedAmount}`)
-    this.log(`Hash: ${transaction.hash().toString('hex')}`)
-    this.log(`Fee: ${CurrencyUtils.render(transaction.fee(), true)}`)
+    this.log(
+      ui.card({
+        'Asset Identifier': assetId,
+        Amount: renderedAmount,
+        Hash: transaction.hash().toString('hex'),
+        Fee: CurrencyUtils.render(transaction.fee(), true),
+      }),
+    )
 
-    const networkId = (await client.chain.getNetworkInfo()).content.networkId
+    const networkId = (await client.wallet.getNodeStatus()).content.node
+      .networkId
     const transactionUrl = getExplorer(networkId)?.getTransactionUrl(
       transaction.hash().toString('hex'),
     )
@@ -290,10 +313,9 @@ export class Burn extends IronfishCommand {
     )
     const renderedFee = CurrencyUtils.render(fee, true)
 
-    await confirmOperation({
+    await ui.confirmOrQuit(
+      `You are about to burn ${renderedAmount} plus a transaction fee of ${renderedFee} with the account ${account}\nDo you confirm?`,
       confirm,
-      confirmMessage: `You are about to burn: ${renderedAmount} plus a transaction fee of ${renderedFee} with the account ${account}\nDo you confirm(Y/N)?`,
-      cancelledMessage: 'Burn aborted.',
-    })
+    )
   }
 }

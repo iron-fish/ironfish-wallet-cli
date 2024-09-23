@@ -7,6 +7,7 @@ import {
   assetMetadataWithDefaults,
   createRootLogger,
   CurrencyUtils,
+  GetTransactionNotesResponse,
   GetUnsignedTransactionNotesResponse,
   Logger,
   PromiseUtils,
@@ -14,11 +15,15 @@ import {
   RpcAsset,
   RpcClient,
   TimeUtils,
+  Transaction,
   TransactionStatus,
   UnsignedTransaction,
 } from '@ironfish/sdk'
-import { CliUx } from '@oclif/core'
-import { ProgressBar } from '../types'
+import { BurnDescription } from '@ironfish/sdk/build/src/primitives/burnDescription'
+import { MintDescription } from '@ironfish/sdk/build/src/primitives/mintDescription'
+import { ux } from '@oclif/core'
+import { RpcClientWallet } from '../command'
+import { ProgressBar, ProgressBarPresets } from '../ui'
 import { getAssetsByIDs, getAssetVerificationByIds } from './asset'
 
 export class TransactionTimer {
@@ -59,16 +64,15 @@ export class TransactionTimer {
     this.startTime = performance.now()
 
     if (this.estimateInMs <= 0) {
-      CliUx.ux.action.start('Sending the transaction')
+      ux.action.start('Sending the transaction')
       return
     }
 
-    this.progressBar = CliUx.ux.progress({
-      format: '{title}: [{bar}] {percentage}% | {estimate}',
-    }) as ProgressBar
+    this.progressBar = new ProgressBar('Sending transaction', {
+      preset: ProgressBarPresets.basic,
+    })
 
     this.progressBar.start(100, 0, {
-      title: 'Sending the transaction',
       estimate: TimeUtils.renderSpan(this.estimateInMs, {
         hideMilliseconds: true,
       }),
@@ -99,7 +103,7 @@ export class TransactionTimer {
     this.endTime = performance.now()
 
     if (!this.progressBar || !this.timer || this.estimateInMs <= 0) {
-      CliUx.ux.action.stop()
+      ux.action.stop()
       return
     }
 
@@ -111,14 +115,36 @@ export class TransactionTimer {
   }
 }
 
+export async function renderTransactionDetails(
+  client: RpcClientWallet,
+  transaction: Transaction,
+  account?: string,
+  logger?: Logger,
+): Promise<void> {
+  let response
+  if (transaction.notes.length > 0) {
+    response = await client.wallet.getTransactionNotes({
+      account,
+      transaction: transaction.serialize().toString('hex'),
+    })
+  }
+
+  await _renderTransactionDetails(
+    client,
+    transaction.mints,
+    transaction.burns,
+    account,
+    response?.content,
+    logger,
+  )
+}
+
 export async function renderUnsignedTransactionDetails(
-  client: RpcClient,
+  client: RpcClientWallet,
   unsignedTransaction: UnsignedTransaction,
   account?: string,
   logger?: Logger,
 ): Promise<void> {
-  logger = logger ?? createRootLogger()
-
   let response
   if (unsignedTransaction.notes.length > 0) {
     response = await client.wallet.getUnsignedTransactionNotes({
@@ -127,16 +153,36 @@ export async function renderUnsignedTransactionDetails(
     })
   }
 
-  const assetIds = collectAssetIds(unsignedTransaction, response?.content)
+  await _renderTransactionDetails(
+    client,
+    unsignedTransaction.mints,
+    unsignedTransaction.burns,
+    account,
+    response?.content,
+    logger,
+  )
+}
+
+async function _renderTransactionDetails(
+  client: RpcClientWallet,
+  mints: MintDescription[],
+  burns: BurnDescription[],
+  account?: string,
+  notes?: GetTransactionNotesResponse | GetUnsignedTransactionNotesResponse,
+  logger?: Logger,
+): Promise<void> {
+  logger = logger ?? createRootLogger()
+
+  const assetIds = collectAssetIds(mints, burns, notes)
   const assetLookup = await getAssetsByIDs(client, assetIds, account, undefined)
 
-  if (unsignedTransaction.mints.length > 0) {
+  if (mints.length > 0) {
     logger.log('')
     logger.log('==================')
     logger.log('Transaction Mints:')
     logger.log('==================')
 
-    for (const [i, mint] of unsignedTransaction.mints.entries()) {
+    for (const [i, mint] of mints.entries()) {
       if (i !== 0) {
         logger.log('------------------')
       }
@@ -163,13 +209,13 @@ export async function renderUnsignedTransactionDetails(
     }
   }
 
-  if (unsignedTransaction.burns.length > 0) {
+  if (burns.length > 0) {
     logger.log('')
     logger.log('==================')
     logger.log('Transaction Burns:')
     logger.log('==================')
 
-    for (const [i, burn] of unsignedTransaction.burns.entries()) {
+    for (const [i, burn] of burns.entries()) {
       if (i !== 0) {
         logger.log('------------------')
       }
@@ -187,18 +233,13 @@ export async function renderUnsignedTransactionDetails(
     }
   }
 
-  if (unsignedTransaction.notes.length > 0) {
-    const response = await client.wallet.getUnsignedTransactionNotes({
-      account,
-      unsignedTransaction: unsignedTransaction.serialize().toString('hex'),
-    })
-
+  if (notes) {
     logger.log('')
     logger.log('==================')
     logger.log('Notes sent:')
     logger.log('==================')
 
-    for (const [i, note] of response.content.sentNotes.entries()) {
+    for (const [i, note] of notes.sentNotes.entries()) {
       // Skip logger since we'll re-render for received notes
       if (note.owner === note.sender) {
         continue
@@ -227,7 +268,7 @@ export async function renderUnsignedTransactionDetails(
     logger.log('Notes received:')
     logger.log('==================')
 
-    for (const [i, note] of response.content.receivedNotes.entries()) {
+    for (const [i, note] of notes.receivedNotes.entries()) {
       if (i !== 0) {
         logger.log('------------------')
       }
@@ -246,10 +287,7 @@ export async function renderUnsignedTransactionDetails(
       logger.log('')
     }
 
-    if (
-      !response.content.sentNotes.length &&
-      !response.content.receivedNotes.length
-    ) {
+    if (!notes.sentNotes.length && !notes.receivedNotes.length) {
       logger.log('')
       logger.log('------------------')
       logger.log('Account unable to decrypt any notes in this transaction')
@@ -279,18 +317,20 @@ export async function renderRawTransactionDetails(
     ? rawTransaction.spends[0].note.owner()
     : null
 
+  /* eslint-disable @typescript-eslint/restrict-template-expressions */
   const summary = `\
- \n===================
- Transaction Summary
- ===================
- 
- From            ${from ?? 'NULL'}
- Fee             ${feeString}
- Expiration      ${
-   rawTransaction.expiration !== null
-     ? rawTransaction.expiration.toString()
-     : ''
- }`
+\n===================
+Transaction Summary
+===================
+
+From            ${from}
+Fee             ${feeString}
+Expiration      ${
+    rawTransaction.expiration !== null
+      ? rawTransaction.expiration.toString()
+      : ''
+  }`
+  /* eslint-enable @typescript-eslint/restrict-template-expressions */
   logger.log(summary)
 
   if (rawTransaction.mints.length > 0) {
@@ -429,18 +469,18 @@ export function displayTransactionSummary(
   const feeString = CurrencyUtils.render(transaction.fee, true)
 
   const summary = `\
- \nTRANSACTION SUMMARY:
- From                 ${from}
- To                   ${to}
- Amount               ${amountString}
- Fee                  ${feeString}
- Memo                 ${memo}
- Outputs              ${transaction.outputs.length}
- Spends               ${transaction.spends.length}
- Expiration           ${
-   transaction.expiration ? transaction.expiration.toString() : ''
- }
- `
+\nTRANSACTION SUMMARY:
+From                 ${from}
+To                   ${to}
+Amount               ${amountString}
+Fee                  ${feeString}
+Memo                 ${memo}
+Outputs              ${transaction.outputs.length}
+Spends               ${transaction.spends.length}
+Expiration           ${
+    transaction.expiration ? transaction.expiration.toString() : ''
+  }
+`
   logger.log(summary)
 }
 
@@ -449,12 +489,15 @@ export async function watchTransaction(options: {
   hash: string
   account?: string
   confirmations?: number
-  waitUntil?: TransactionStatus
+  waitUntil?: TransactionStatus[]
   pollFrequencyMs?: number
   logger?: Logger
 }): Promise<void> {
   const logger = options.logger ?? createRootLogger()
-  const waitUntil = options.waitUntil ?? TransactionStatus.CONFIRMED
+  const waitUntil = options.waitUntil ?? [
+    TransactionStatus.CONFIRMED,
+    TransactionStatus.EXPIRED,
+  ]
   const pollFrequencyMs = options.pollFrequencyMs ?? 10000
 
   let lastTime = Date.now()
@@ -472,16 +515,16 @@ export async function watchTransaction(options: {
   let currentStatus = prevStatus
 
   // If the transaction is already in the desired state, return
-  if (currentStatus === waitUntil) {
-    logger.log(`Transaction ${options.hash} is ${waitUntil}`)
+  if (currentStatus !== 'not found' && waitUntil.includes(currentStatus)) {
+    logger.log(`Transaction ${options.hash} is ${currentStatus}`)
     return
   }
 
   logger.log(`Watching transaction ${options.hash}`)
 
-  CliUx.ux.action.start(`Current Status`)
+  ux.action.start(`Current Status`)
   const span = TimeUtils.renderSpan(0, { hideMilliseconds: true })
-  CliUx.ux.action.status = `${currentStatus} ${span}`
+  ux.action.status = `${currentStatus} ${span}`
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -494,16 +537,14 @@ export async function watchTransaction(options: {
     currentStatus = response?.content.transaction?.status ?? 'not found'
 
     if (prevStatus !== 'not found' && currentStatus === 'not found') {
-      CliUx.ux.action.stop(
-        `Transaction ${options.hash} deleted while watching it.`,
-      )
+      ux.action.stop(`Transaction ${options.hash} deleted while watching it.`)
       break
     }
 
     if (currentStatus === prevStatus) {
       const duration = Date.now() - lastTime
       const span = TimeUtils.renderSpan(duration, { hideMilliseconds: true })
-      CliUx.ux.action.status = `${currentStatus} ${span}`
+      ux.action.status = `${currentStatus} ${span}`
       await PromiseUtils.sleep(pollFrequencyMs)
       continue
     }
@@ -513,7 +554,7 @@ export async function watchTransaction(options: {
     const duration = now - lastTime
     lastTime = now
 
-    CliUx.ux.action.stop(
+    ux.action.stop(
       `${prevStatus} -> ${currentStatus}: ${TimeUtils.renderSpan(duration, {
         hideMilliseconds: true,
       })}`,
@@ -522,14 +563,14 @@ export async function watchTransaction(options: {
     last = response
     prevStatus = currentStatus
 
-    CliUx.ux.action.start(`Current Status`)
+    ux.action.start(`Current Status`)
     const span = TimeUtils.renderSpan(0, { hideMilliseconds: true })
-    CliUx.ux.action.status = `${currentStatus} ${span}`
+    ux.action.status = `${currentStatus} ${span}`
 
-    if (currentStatus === waitUntil) {
+    if (currentStatus !== 'not found' && waitUntil.includes(currentStatus)) {
       const duration = now - startTime
       const span = TimeUtils.renderSpan(duration, { hideMilliseconds: true })
-      CliUx.ux.action.stop(`done after ${span}`)
+      ux.action.stop(`done after ${span}`)
       break
     }
   }
@@ -561,16 +602,17 @@ function collectRawTransactionAssetIds(
 }
 
 function collectAssetIds(
-  unsignedTransaction: UnsignedTransaction,
-  notes?: GetUnsignedTransactionNotesResponse,
+  mints: MintDescription[],
+  burns: BurnDescription[],
+  notes?: GetTransactionNotesResponse | GetUnsignedTransactionNotesResponse,
 ): string[] {
   const assetIds = new Set<string>()
 
-  for (const mint of unsignedTransaction.mints) {
+  for (const mint of mints) {
     assetIds.add(mint.asset.id().toString('hex'))
   }
 
-  for (const burn of unsignedTransaction.burns) {
+  for (const burn of burns) {
     assetIds.add(burn.assetId.toString('hex'))
   }
 

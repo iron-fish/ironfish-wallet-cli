@@ -1,11 +1,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { ACCOUNT_SCHEMA_VERSION, RpcClient } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
-import { IronfishCommand } from '../../../command'
+import { ACCOUNT_SCHEMA_VERSION, JsonEncoder } from '@ironfish/sdk'
+import { AccountImport } from '@ironfish/sdk/build/src/wallet/exporter'
+import { Flags, ux } from '@oclif/core'
+import { IronfishCommand, RpcClientWallet } from '../../../command'
 import { RemoteFlags } from '../../../flags'
-import { longPrompt } from '../../../utils/longPrompt'
+import * as ui from '../../../ui'
 
 export class MultisigCreateDealer extends IronfishCommand {
   static description = `Create a set of multisig accounts from participant identities`
@@ -36,9 +37,12 @@ export class MultisigCreateDealer extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(MultisigCreateDealer)
 
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
     let identities = flags.identity
     if (!identities || identities.length < 2) {
-      const input = await longPrompt(
+      const input = await ui.longPrompt(
         'Enter the identities of all participants, separated by commas',
         {
           required: true,
@@ -54,19 +58,15 @@ export class MultisigCreateDealer extends IronfishCommand {
 
     let minSigners = flags.minSigners
     if (!minSigners) {
-      const input = await CliUx.ux.prompt(
+      const input = await ui.inputPrompt(
         'Enter the number of minimum signers',
-        {
-          required: true,
-        },
+        true,
       )
       minSigners = parseInt(input)
       if (isNaN(minSigners) || minSigners < 2) {
         this.error('Minimum number of signers must be at least 2')
       }
     }
-
-    const client = await this.sdk.connectRpc()
 
     const name = await this.getCoordinatorName(client, flags.name?.trim())
 
@@ -77,12 +77,10 @@ export class MultisigCreateDealer extends IronfishCommand {
       },
     )
 
-    const chainResponse = await client.chain.getChainInfo()
-    const hash = Buffer.from(
-      chainResponse.content.currentBlockIdentifier.hash,
-      'hex',
-    )
-    const sequence = Number(chainResponse.content.currentBlockIdentifier.index)
+    const chainResponse = (await client.wallet.getNodeStatus()).content
+      .blockchain
+    const hash = Buffer.from(chainResponse.head.hash, 'hex')
+    const sequence = Number(chainResponse.head.sequence)
     const createdAt = {
       hash,
       sequence,
@@ -90,29 +88,31 @@ export class MultisigCreateDealer extends IronfishCommand {
 
     if (flags.importCoordinator) {
       this.log()
-      CliUx.ux.action.start('Importing the coordinator as a view-only account')
+      ux.action.start('Importing the coordinator as a view-only account')
+
+      const account: AccountImport = {
+        name,
+        version: ACCOUNT_SCHEMA_VERSION,
+        createdAt: {
+          hash: createdAt.hash,
+          sequence: createdAt.sequence,
+        },
+        spendingKey: null,
+        viewKey: response.content.viewKey,
+        incomingViewKey: response.content.incomingViewKey,
+        outgoingViewKey: response.content.outgoingViewKey,
+        publicAddress: response.content.publicAddress,
+        proofAuthorizingKey: response.content.proofAuthorizingKey,
+        multisigKeys: {
+          publicKeyPackage: response.content.publicKeyPackage,
+        },
+      }
 
       await client.wallet.importAccount({
-        account: {
-          name,
-          version: ACCOUNT_SCHEMA_VERSION,
-          createdAt: {
-            hash: createdAt.hash.toString('hex'),
-            sequence: createdAt.sequence,
-          },
-          spendingKey: null,
-          viewKey: response.content.viewKey,
-          incomingViewKey: response.content.incomingViewKey,
-          outgoingViewKey: response.content.outgoingViewKey,
-          publicAddress: response.content.publicAddress,
-          proofAuthorizingKey: response.content.proofAuthorizingKey,
-          multisigKeys: {
-            publicKeyPackage: response.content.publicKeyPackage,
-          },
-        },
+        account: new JsonEncoder().encode(account),
       })
 
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
     for (const [
@@ -134,7 +134,7 @@ export class MultisigCreateDealer extends IronfishCommand {
   }
 
   async getCoordinatorName(
-    client: RpcClient,
+    client: RpcClientWallet,
     inputName?: string,
   ): Promise<string> {
     const accountsResponse = await client.wallet.getAccounts()
@@ -148,10 +148,7 @@ export class MultisigCreateDealer extends IronfishCommand {
     let name = inputName
     do {
       name =
-        name ??
-        (await CliUx.ux.prompt('Enter a name for the coordinator', {
-          required: true,
-        }))
+        name ?? (await ui.inputPrompt('Enter a name for the coordinator', true))
 
       if (accountNames.has(name)) {
         this.log(`Account with name ${name} already exists`)

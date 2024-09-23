@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import {
+  ApiNamespace,
   Config as IronfishConfig,
   ConfigOptions,
   createRootLogger,
@@ -10,14 +11,15 @@ import {
   InternalOptions,
   IronfishSdk,
   Logger,
+  RpcClient,
   RpcConnectionError,
+  RpcMemoryClient,
 } from '@ironfish/sdk'
-import { Command, Config } from '@oclif/core'
+import { Command, Config, ux } from '@oclif/core'
 import { CLIError, ExitError } from '@oclif/core/lib/errors'
 import {
   ConfigFlagKey,
   DataDirFlagKey,
-  NetworkIdFlagKey,
   RpcAuthFlagKey,
   RpcHttpHostFlagKey,
   RpcHttpPortFlagKey,
@@ -42,15 +44,16 @@ import {
   WalletNodeUseTcpFlagKey,
 } from './flags'
 import { IronfishCliPKG } from './package'
+import * as ui from './ui'
 import { hasUserResponseError } from './utils'
 import { WalletConfig, WalletConfigOptions } from './walletConfig'
+import { walletNode } from './walletNode'
 
 export type SIGNALS = 'SIGTERM' | 'SIGINT' | 'SIGUSR2'
 
 export type FLAGS =
   | typeof DataDirFlagKey
   | typeof ConfigFlagKey
-  | typeof NetworkIdFlagKey
   | typeof RpcUseIpcFlagKey
   | typeof RpcUseTcpFlagKey
   | typeof RpcTcpHostFlagKey
@@ -75,8 +78,6 @@ export abstract class IronfishCommand extends Command {
   // run() is called and it provides a lot of value
   sdk!: IronfishSdk
 
-  walletConfig!: WalletConfig
-
   /**
    * Use this logger instance for debug/error output.
    * Actual command output should use `this.log` instead.
@@ -88,16 +89,20 @@ export abstract class IronfishCommand extends Command {
    */
   closing = false
 
+  client: RpcClient | null = null
+
+  walletConfig!: WalletConfig
+
   constructor(argv: string[], config: Config) {
     super(argv, config)
     this.logger = createRootLogger().withTag(this.ctor.id)
   }
 
-  abstract start(): Promise<void> | void
+  abstract start(): Promise<unknown> | void
 
-  async run(): Promise<void> {
+  async run(): Promise<unknown> {
     try {
-      await this.start()
+      return await this.start()
     } catch (error: unknown) {
       if (hasUserResponseError(error)) {
         this.log(error.codeMessage)
@@ -123,16 +128,15 @@ export abstract class IronfishCommand extends Command {
       } else {
         throw error
       }
+    } finally {
+      this.client?.close()
     }
 
     this.exit(0)
   }
 
   async init(): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    const commandClass = this.constructor as any
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const { flags } = await this.parse(commandClass)
+    const { flags } = await this.parse(this.ctor)
 
     // Get the flags from the flag object which is unknown
     const dataDirFlag = getFlag(flags, DataDirFlagKey)
@@ -160,11 +164,13 @@ export abstract class IronfishCommand extends Command {
     const rpcTcpHostFlag = getFlag(flags, RpcTcpHostFlagKey)
     if (typeof rpcTcpHostFlag === 'string') {
       configOverrides.rpcTcpHost = rpcTcpHostFlag
+      configOverrides.enableRpcTcp = true
     }
 
     const rpcTcpPortFlag = getFlag(flags, RpcTcpPortFlagKey)
     if (typeof rpcTcpPortFlag === 'number') {
       configOverrides.rpcTcpPort = rpcTcpPortFlag
+      configOverrides.enableRpcTcp = true
     }
 
     const rpcConnectHttpFlag = getFlag(flags, RpcUseHttpFlagKey)
@@ -178,11 +184,13 @@ export abstract class IronfishCommand extends Command {
     const rpcHttpHostFlag = getFlag(flags, RpcHttpHostFlagKey)
     if (typeof rpcHttpHostFlag === 'string') {
       configOverrides.rpcHttpHost = rpcHttpHostFlag
+      configOverrides.enableRpcHttp = true
     }
 
     const rpcHttpPortFlag = getFlag(flags, RpcHttpPortFlagKey)
     if (typeof rpcHttpPortFlag === 'number') {
       configOverrides.rpcHttpPort = rpcHttpPortFlag
+      configOverrides.enableRpcHttp = true
     }
 
     const rpcTcpTlsFlag = getFlag(flags, RpcTcpTlsFlagKey)
@@ -204,11 +212,6 @@ export abstract class IronfishCommand extends Command {
     const rpcAuthFlag = getFlag(flags, RpcAuthFlagKey)
     if (typeof rpcAuthFlag === 'string') {
       internalOverrides.rpcAuthToken = rpcAuthFlag
-    }
-
-    const networkId = getFlag(flags, NetworkIdFlagKey)
-    if (typeof networkId === 'number') {
-      internalOverrides.networkId = networkId
     }
 
     this.sdk = await IronfishSdk.init({
@@ -326,9 +329,107 @@ export abstract class IronfishCommand extends Command {
   closeFromSignal(signal: NodeJS.Signals): Promise<unknown> {
     throw new Error(`Not implemented closeFromSignal: ${signal}`)
   }
+
+  // Override the built-in logJson method to implement our own colorizer that
+  // works with default terminal colors instead of requiring a theme to be
+  // configured.
+  logJson(json: unknown): void {
+    ux.stdout(ui.json(json))
+  }
+
+  async connectRpcConfig(
+    forceLocal = false,
+    forceRemote = false,
+  ): Promise<Pick<RpcClient, 'config'>> {
+    forceRemote = forceRemote || this.sdk.config.get('enableRpcTcp')
+
+    if (!forceLocal) {
+      if (forceRemote) {
+        await this.sdk.client.connect()
+        return this.sdk.client
+      }
+
+      const connected = await this.sdk.client.tryConnect()
+      if (connected) {
+        return this.sdk.client
+      }
+    }
+
+    // This connection uses a wallet node since that is the most granular type
+    // of node available. This can be refactored in the future if needed.
+    const node = await walletNode({
+      connectNodeClient: false,
+      walletConfig: this.walletConfig,
+      sdk: this.sdk,
+    })
+
+    const clientMemory = new RpcMemoryClient(
+      this.sdk.logger,
+      node.rpc.getRouter([ApiNamespace.config]),
+    )
+    return clientMemory
+  }
+
+  async connectRpcWallet(
+    options: {
+      forceLocal?: boolean
+      forceRemote?: boolean
+      connectNodeClient?: boolean
+    } = {
+      forceLocal: false,
+      forceRemote: false,
+      connectNodeClient: false,
+    },
+  ): Promise<RpcClientWallet> {
+    const forceRemote =
+      options.forceRemote || this.sdk.config.get('enableRpcTcp')
+
+    if (!options.forceLocal) {
+      if (forceRemote) {
+        await this.sdk.client.connect()
+        return this.sdk.client
+      }
+
+      const connected = await this.sdk.client.tryConnect()
+      if (connected) {
+        return this.sdk.client
+      }
+    }
+
+    const namespaces = [
+      ApiNamespace.config,
+      ApiNamespace.faucet,
+      ApiNamespace.rpc,
+      ApiNamespace.wallet,
+      ApiNamespace.worker,
+    ]
+
+    const node = await walletNode({
+      connectNodeClient: !!options.connectNodeClient,
+      sdk: this.sdk,
+      walletConfig: this.walletConfig,
+    })
+
+    const clientMemory = new RpcMemoryClient(
+      this.sdk.logger,
+      node.rpc.getRouter(namespaces),
+    )
+
+    await node.waitForOpen()
+    if (options.connectNodeClient) {
+      await node.connectRpc()
+    }
+
+    return clientMemory
+  }
 }
 
-function getFlag(flags: unknown, flag: FLAGS): unknown | null {
+export type RpcClientWallet = Pick<
+  RpcClient,
+  'config' | 'rpc' | 'wallet' | 'worker' | 'faucet'
+>
+
+function getFlag(flags: unknown, flag: FLAGS): unknown {
   return typeof flags === 'object' && flags !== null && flag in flags
     ? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
       (flags as any)[flag]
