@@ -111,10 +111,10 @@ export class FaucetCommand extends IronfishCommand {
     It will be processed within the next hour and $IRON will be sent directly to your account.
 
     Check your balance by running:
-      - ironfish wallet:balance
+      - ironfishw balance
 
     Learn how to send a transaction by running:
-      - ironfish wallet:send --help`,
+      - ironfishw send --help`,
     )
   }
 }
