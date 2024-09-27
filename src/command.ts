@@ -15,10 +15,11 @@ import {
   RpcConnectionError,
   RpcMemoryClient,
 } from '@ironfish/sdk'
-import { Command, Config, ux } from '@oclif/core'
-import { CLIError, ExitError } from '@oclif/core/lib/errors'
+import { Command, Config, Errors, ux } from '@oclif/core'
 import {
+  ConfigFlag,
   ConfigFlagKey,
+  DataDirFlag,
   DataDirFlagKey,
   RpcAuthFlagKey,
   RpcHttpHostFlagKey,
@@ -93,6 +94,12 @@ export abstract class IronfishCommand extends Command {
 
   walletConfig!: WalletConfig
 
+  public static baseFlags = {
+    [VerboseFlagKey]: VerboseFlag,
+    [ConfigFlagKey]: ConfigFlag,
+    [DataDirFlagKey]: DataDirFlag,
+  }
+
   constructor(argv: string[], config: Config) {
     super(argv, config)
     this.logger = createRootLogger().withTag(this.ctor.id)
@@ -112,9 +119,9 @@ export abstract class IronfishCommand extends Command {
         }
 
         this.exit(1)
-      } else if (error instanceof ExitError) {
+      } else if (error instanceof Errors.ExitError) {
         throw error
-      } else if (error instanceof CLIError) {
+      } else if (error instanceof Errors.CLIError) {
         throw error
       } else if (error instanceof RpcConnectionError) {
         this.log(`Cannot connect to your node, start your node first.`)
@@ -367,6 +374,7 @@ export abstract class IronfishCommand extends Command {
       this.sdk.logger,
       node.rpc.getRouter([ApiNamespace.config]),
     )
+    this.client = clientMemory
     return clientMemory
   }
 
@@ -387,11 +395,13 @@ export abstract class IronfishCommand extends Command {
     if (!options.forceLocal) {
       if (forceRemote) {
         await this.sdk.client.connect()
+        this.client = this.sdk.client
         return this.sdk.client
       }
 
       const connected = await this.sdk.client.tryConnect()
       if (connected) {
+        this.client = this.sdk.client
         return this.sdk.client
       }
     }
@@ -420,6 +430,7 @@ export abstract class IronfishCommand extends Command {
       await node.connectRpc()
     }
 
+    this.client = clientMemory
     return clientMemory
   }
 }
