@@ -3,15 +3,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { DEFAULT_DISCORD_INVITE, RpcRequestError } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
 import { ONE_FISH_IMAGE, TWO_FISH_IMAGE } from '../images'
+import { inputPrompt } from '../ui'
 
 const FAUCET_DISABLED = false
 
 export class FaucetCommand extends IronfishCommand {
-  static description = `Receive coins from the Iron Fish official testnet Faucet`
+  static description = 'get coins from the testnet Faucet'
 
   static flags = {
     ...RemoteFlags,
@@ -36,18 +37,25 @@ export class FaucetCommand extends IronfishCommand {
       this.exit(1)
     }
 
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    const networkInfoResponse = await client.wallet.getNodeStatus()
+
+    if (
+      networkInfoResponse.content === null ||
+      networkInfoResponse.content.node.networkId !== 0
+    ) {
+      // not testnet
+      this.log(`The faucet is only available for testnet.`)
+      this.exit(1)
+    }
 
     this.log(ONE_FISH_IMAGE)
     let email = flags.email
 
     if (!email) {
       email =
-        (await CliUx.ux.prompt(
+        (await inputPrompt(
           'Enter your email to stay updated with Iron Fish',
-          {
-            required: false,
-          },
         )) || undefined
     }
 
@@ -60,17 +68,14 @@ export class FaucetCommand extends IronfishCommand {
         `You don't have a default account set up yet. Let's create one first!`,
       )
       accountName =
-        (await CliUx.ux.prompt(
+        (await inputPrompt(
           'Please enter the name of your new Iron Fish account',
-          {
-            required: false,
-          },
         )) || 'default'
 
       await client.wallet.createAccount({ name: accountName, default: true })
     }
 
-    CliUx.ux.action.start(
+    ux.action.start(
       'Collecting your funds',
       'Sending a request to the Iron Fish network',
       {
@@ -85,9 +90,9 @@ export class FaucetCommand extends IronfishCommand {
       })
     } catch (error: unknown) {
       if (error instanceof RpcRequestError) {
-        CliUx.ux.action.stop(error.codeMessage)
+        ux.action.stop(error.codeMessage)
       } else {
-        CliUx.ux.action.stop(
+        ux.action.stop(
           'Unfortunately, the faucet request failed. Please try again later.',
         )
       }
@@ -95,21 +100,21 @@ export class FaucetCommand extends IronfishCommand {
       this.exit(1)
     }
 
-    CliUx.ux.action.stop('Success')
+    ux.action.stop('Success')
     this.log(
       `
 
-    ${TWO_FISH_IMAGE}
+        ${TWO_FISH_IMAGE}
 
-Congratulations! The Iron Fish Faucet just added your request to the queue!
+    Congratulations! The Iron Fish Faucet just added your request to the queue!
 
-It will be processed within the next hour and $IRON will be sent directly to your account.
+    It will be processed within the next hour and $IRON will be sent directly to your account.
 
-Check your balance by running:
-  - ironfish wallet:balance
+    Check your balance by running:
+      - ironfishw balance
 
-Learn how to send a transaction by running:
-  - ironfish wallet:send --help`,
+    Learn how to send a transaction by running:
+      - ironfishw send --help`,
     )
   }
 }

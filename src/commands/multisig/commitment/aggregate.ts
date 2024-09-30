@@ -5,7 +5,7 @@
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
-import { longPrompt } from '../../../utils/longPrompt'
+import * as ui from '../../../ui'
 import { MultisigTransactionJson } from '../../../utils/multisig'
 
 export class CreateSigningPackage extends IronfishCommand {
@@ -14,9 +14,9 @@ export class CreateSigningPackage extends IronfishCommand {
   static flags = {
     ...RemoteFlags,
     account: Flags.string({
-      char: 'f',
-      description: 'The account to use when creating the signing package',
-      required: false,
+      char: 'a',
+      description:
+        'Name of the account to use when creating the signing package',
     }),
     unsignedTransaction: Flags.string({
       char: 'u',
@@ -43,16 +43,22 @@ export class CreateSigningPackage extends IronfishCommand {
     )
     const options = MultisigTransactionJson.resolveFlags(flags, loaded)
 
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
     let unsignedTransaction = options.unsignedTransaction
     if (!unsignedTransaction) {
-      unsignedTransaction = await longPrompt('Enter the unsigned transaction', {
-        required: true,
-      })
+      unsignedTransaction = await ui.longPrompt(
+        'Enter the unsigned transaction',
+        {
+          required: true,
+        },
+      )
     }
 
     let commitments = options.commitment
     if (!commitments) {
-      const input = await longPrompt(
+      const input = await ui.longPrompt(
         'Enter the signing commitments, separated by commas',
         {
           required: true,
@@ -61,8 +67,6 @@ export class CreateSigningPackage extends IronfishCommand {
       commitments = input.split(',')
     }
     commitments = commitments.map((s) => s.trim())
-
-    const client = await this.sdk.connectRpc()
 
     const signingPackageResponse =
       await client.wallet.multisig.createSigningPackage({

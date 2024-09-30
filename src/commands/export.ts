@@ -2,20 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { AccountFormat, ErrorUtils, LanguageUtils } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import fs from 'fs'
-import jsonColorizer from 'json-colorizer'
 import path from 'path'
 import { IronfishCommand } from '../command'
-import { ColorFlag, ColorFlagKey, RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { EnumLanguageKeyFlag, JsonFlags, RemoteFlags } from '../flags'
+import { checkWalletUnlocked, confirmOrQuit } from '../ui'
+import { useAccount } from '../utils'
 
 export class ExportCommand extends IronfishCommand {
-  static description = `Export an account`
+  static description = `export an account`
+  static enableJsonFlag = true
 
   static flags = {
     ...RemoteFlags,
-    [ColorFlagKey]: ColorFlag,
+    ...JsonFlags,
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to export',
+    }),
     local: Flags.boolean({
       default: false,
       description: 'Export an account without an online node',
@@ -24,18 +29,12 @@ export class ExportCommand extends IronfishCommand {
       default: false,
       description: 'Export an account to a mnemonic 24 word phrase',
     }),
-    language: Flags.enum({
+    language: EnumLanguageKeyFlag({
       description: 'Language to use for mnemonic export',
-      required: false,
-      options: LanguageUtils.LANGUAGE_KEYS,
-    }),
-    json: Flags.boolean({
-      default: false,
-      description: 'Output the account as JSON, rather than the default bech32',
+      choices: LanguageUtils.LANGUAGE_KEYS,
     }),
     path: Flags.string({
       description: 'The path to export the account to',
-      required: false,
     }),
     viewonly: Flags.boolean({
       default: false,
@@ -43,21 +42,9 @@ export class ExportCommand extends IronfishCommand {
     }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
-      required: false,
-      description: 'Name of the account to export',
-    },
-  ]
-
-  async start(): Promise<void> {
-    const { flags, args } = await this.parse(ExportCommand)
-    const { color, local } = flags
-    const account = args.account as string
-    const exportPath = flags.path
-    const viewOnly = flags.viewonly
+  async start(): Promise<unknown> {
+    const { flags } = await this.parse(ExportCommand)
+    const { local, path: exportPath, viewonly: viewOnly } = flags
 
     if (flags.language) {
       flags.mnemonic = true
@@ -69,10 +56,11 @@ export class ExportCommand extends IronfishCommand {
       ? AccountFormat.JSON
       : AccountFormat.Base64Json
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-      forceLocal: local,
-    })
+    const client = await this.connectRpcWallet({ forceLocal: local })
+    await checkWalletUnlocked(client)
+
+    const account = await useAccount(client, flags.account)
+
     const response = await client.wallet.exportAccount({
       account,
       viewOnly,
@@ -80,10 +68,7 @@ export class ExportCommand extends IronfishCommand {
       language: flags.language,
     })
 
-    let output = response.content.account as string
-    if (color && flags.json && !exportPath) {
-      output = jsonColorizer(output)
-    }
+    const output = response.content.account
 
     if (exportPath) {
       let resolved = this.sdk.fileSystem.resolve(exportPath)
@@ -99,15 +84,10 @@ export class ExportCommand extends IronfishCommand {
         }
 
         if (fs.existsSync(resolved)) {
-          this.log(`There is already an account backup at ${exportPath}`)
-
-          const confirmed = await CliUx.ux.confirm(
-            `\nOverwrite the account backup with new file?\nAre you sure? (Y)es / (N)o`,
+          await confirmOrQuit(
+            `There is already an account backup at ${exportPath}` +
+              `\n\nOverwrite the account backup with new file?`,
           )
-
-          if (!confirmed) {
-            this.exit(1)
-          }
         }
 
         await fs.promises.writeFile(resolved, output)
@@ -125,5 +105,9 @@ export class ExportCommand extends IronfishCommand {
     }
 
     this.log(output)
+
+    if (flags.json) {
+      return output
+    }
   }
 }

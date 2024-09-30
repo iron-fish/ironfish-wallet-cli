@@ -9,8 +9,6 @@ import {
   ConfigFlagKey,
   DataDirFlag,
   DataDirFlagKey,
-  NetworkIdFlag,
-  NetworkIdFlagKey,
   RpcHttpHostFlag,
   RpcHttpHostFlagKey,
   RpcHttpPortFlag,
@@ -38,14 +36,13 @@ import { WalletNode, walletNode } from '../walletNode'
 const DEFAULT_ACCOUNT_NAME = 'default'
 
 export default class WalletStart extends IronfishCommand {
-  static description = 'Start the wallet node'
+  static description = 'start the wallet node'
 
   static flags = {
     ...WalletRemoteFlags,
     [VerboseFlagKey]: VerboseFlag,
     [ConfigFlagKey]: ConfigFlag,
     [DataDirFlagKey]: DataDirFlag,
-    [NetworkIdFlagKey]: NetworkIdFlag,
     [RpcUseIpcFlagKey]: { ...RpcUseIpcFlag, allowNo: true },
     [RpcUseTcpFlagKey]: { ...RpcUseTcpFlag, allowNo: true },
     [RpcUseHttpFlagKey]: { ...RpcUseHttpFlag, allowNo: true },
@@ -72,6 +69,11 @@ export default class WalletStart extends IronfishCommand {
       default: undefined,
       description:
         'Path to a JSON file containing the network definition of a custom network to connect to',
+    }),
+    networkId: Flags.integer({
+      char: 'i',
+      default: undefined,
+      description: 'Network ID of an official Iron Fish network to connect to',
     }),
   }
 

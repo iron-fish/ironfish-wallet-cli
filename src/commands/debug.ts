@@ -6,31 +6,27 @@ import {
   DatabaseOpenError,
   ErrorUtils,
   FileUtils,
+  FullNode,
   IronfishPKG,
 } from '@ironfish/sdk'
 import { execSync } from 'child_process'
 import os from 'os'
 import { getHeapStatistics } from 'v8'
 import { IronfishCommand } from '../command'
-import { LocalFlags } from '../flags'
-import { WalletNode, walletNode } from '../walletNode'
-
-const SPACE_BUFFER = 8
+import { JsonFlags } from '../flags'
+import * as ui from '../ui'
 
 export default class Debug extends IronfishCommand {
   static description = 'Show debug information to help locate issues'
   static hidden = true
+  static enableJsonFlag = true
 
   static flags = {
-    ...LocalFlags,
+    ...JsonFlags,
   }
 
-  async start(): Promise<void> {
-    const node = await walletNode({
-      sdk: this.sdk,
-      walletConfig: this.walletConfig,
-      connectNodeClient: true,
-    })
+  async start(): Promise<unknown> {
+    const node = await this.sdk.node({ autoSeed: false })
 
     let dbOpen = true
     try {
@@ -53,13 +49,15 @@ export default class Debug extends IronfishCommand {
 
     let output = this.baseOutput(node)
     if (dbOpen) {
-      output = new Map([...output, ...(await this.outputRequiringDB(node))])
+      output = { ...output, ...(await this.outputRequiringDB(node)) }
     }
 
-    this.display(output)
+    this.log(ui.card(output))
+
+    return output
   }
 
-  baseOutput(node: WalletNode): Map<string, string> {
+  baseOutput(node: FullNode): Record<string, string> {
     const cpus = os.cpus()
     const cpuNames = [...new Set(cpus.map((c) => c.model))]
     const cpuThreads = cpus.length
@@ -69,72 +67,68 @@ export default class Debug extends IronfishCommand {
       getHeapStatistics().total_available_size,
     )
 
+    const telemetryEnabled = this.sdk.config.get('enableTelemetry').toString()
     const assetVerificationEnabled = this.sdk.config
       .get('enableAssetVerification')
       .toString()
 
+    const nodeName = this.sdk.config.get('nodeName').toString()
+    const blockGraffiti = this.sdk.config.get('blockGraffiti').toString()
+
     let cmdInPath: boolean
     try {
-      execSync('ironfishw --help', { stdio: 'ignore' })
+      execSync('ironfish --help', { stdio: 'ignore' })
       cmdInPath = true
     } catch {
       cmdInPath = false
     }
 
-    return new Map<string, string>([
-      ['Iron Fish version', `${node.pkg.version} @ ${node.pkg.git}`],
-      ['Iron Fish library', `${IronfishPKG.version} @ ${IronfishPKG.git}`],
-      ['Operating system', `${os.type()} ${process.arch}`],
-      ['CPU model(s)', `${cpuNames.toString()}`],
-      ['CPU threads', `${cpuThreads}`],
-      ['RAM total', `${memTotal}`],
-      ['Heap total', `${heapTotal}`],
-      ['Node version', `${process.version}`],
-      ['ironfishw in PATH', `${cmdInPath.toString()}`],
-      ['Garbage Collector Exposed', `${String(!!global.gc)}`],
-      ['Asset Verification enabled', `${assetVerificationEnabled}`],
-    ])
+    return {
+      'Iron Fish version': `${node.pkg.version} @ ${node.pkg.git}`,
+      'Iron Fish library': `${IronfishPKG.version} @ ${IronfishPKG.git}`,
+      'Operating system': `${os.type()} ${process.arch}`,
+      'CPU model(s)': cpuNames.toString(),
+      'CPU threads': cpuThreads.toString(),
+      'RAM total': memTotal,
+      'Heap total': heapTotal,
+      'Node version': process.version,
+      'ironfish in PATH': cmdInPath.toString(),
+      'Garbage Collector Exposed': String(!!global.gc),
+      'Telemetry enabled': telemetryEnabled,
+      'Asset Verification enabled': assetVerificationEnabled,
+      'Node name': nodeName,
+      'Block graffiti': blockGraffiti,
+    }
   }
 
-  async outputRequiringDB(node: WalletNode): Promise<Map<string, string>> {
-    const output = new Map<string, string>()
+  async outputRequiringDB(node: FullNode): Promise<Record<string, string>> {
+    const output: Record<string, string> = {}
 
+    const headHashes = new Map<string, Buffer | null>()
     for await (const { accountId, head } of node.wallet.walletDb.loadHeads()) {
+      headHashes.set(accountId, head?.hash ?? null)
+    }
+
+    for (const [accountId, headHash] of headHashes.entries()) {
       const account = node.wallet.getAccount(accountId)
+
+      const blockHeader = headHash ? await node.chain.getHeader(headHash) : null
+      const headInChain = !!blockHeader
+      const headSequence = blockHeader?.sequence || 'null'
+
       const shortId = accountId.slice(0, 6)
 
-      output.set(`Account ${shortId} uuid`, `${accountId}`)
-      output.set(
-        `Account ${shortId} name`,
-        `${account?.name || `ACCOUNT NOT FOUND`}`,
-      )
-
-      if (head) {
-        output.set(
-          `Account ${shortId} head hash`,
-          `${head.hash.toString('hex')}`,
-        )
-        output.set(`Account ${shortId} sequence`, `${head.sequence}`)
-      }
+      output[`Account ${shortId} uuid`] = accountId
+      output[`Account ${shortId} name`] = account?.name || `ACCOUNT NOT FOUND`
+      output[`Account ${shortId} head hash`] = headHash
+        ? headHash.toString('hex')
+        : 'NULL'
+      output[`Account ${shortId} head in chain`] = headInChain.toString()
+      output[`Account ${shortId} sequence`] = headSequence
+        ? headSequence.toString()
+        : 'NULL'
     }
 
     return output
-  }
-
-  display(output: Map<string, string>): void {
-    // Get the longest key length to determine how big to make the space buffer
-    let longestStringLength = 0
-    for (const key of output.keys()) {
-      if (key.length > longestStringLength) {
-        longestStringLength = key.length
-      }
-    }
-
-    const maxKeyWidth = longestStringLength + SPACE_BUFFER
-    output.forEach((value, key) => {
-      const spaceWidth = maxKeyWidth - key.length
-      const spaceString = new Array(spaceWidth).join(' ')
-      this.log(`${key}${spaceString}${value}`)
-    })
   }
 }

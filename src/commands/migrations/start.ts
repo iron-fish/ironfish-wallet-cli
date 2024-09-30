@@ -3,22 +3,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
-import {
-  ConfigFlag,
-  ConfigFlagKey,
-  DataDirFlag,
-  DataDirFlagKey,
-  LocalFlags,
-} from '../../flags'
-import { walletNode } from '../../walletNode'
 
 export class StartCommand extends IronfishCommand {
-  static description = `Run migrations`
+  static description = `run migrations`
 
   static flags = {
-    ...LocalFlags,
-    [ConfigFlagKey]: ConfigFlag,
-    [DataDirFlagKey]: DataDirFlag,
     dry: Flags.boolean({
       default: false,
       description: 'Dry run migrations first',
@@ -33,12 +22,7 @@ export class StartCommand extends IronfishCommand {
   async start(): Promise<void> {
     const { flags } = await this.parse(StartCommand)
 
-    const node = await walletNode({
-      sdk: this.sdk,
-      walletConfig: this.walletConfig,
-      connectNodeClient: false,
-    })
-
+    const node = await this.sdk.node()
     await node.migrator.migrate({ quiet: flags.quiet, dryRun: flags.dry })
   }
 }

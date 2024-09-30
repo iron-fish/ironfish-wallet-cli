@@ -2,9 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { RPC_ERROR_CODES, RpcRequestError } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
+import * as ui from '../../../ui'
 
 export class MultisigIdentityCreate extends IronfishCommand {
   static description = `Create a multisig participant identity`
@@ -19,14 +20,15 @@ export class MultisigIdentityCreate extends IronfishCommand {
 
   async start(): Promise<void> {
     const { flags } = await this.parse(MultisigIdentityCreate)
+
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
     let name = flags.name
     if (!name) {
-      name = await CliUx.ux.prompt('Enter a name for the identity', {
-        required: true,
-      })
+      name = await ui.inputPrompt('Enter a name for the identity', true)
     }
 
-    const client = await this.sdk.connectRpc()
     let response
     while (!response) {
       try {
@@ -38,9 +40,7 @@ export class MultisigIdentityCreate extends IronfishCommand {
         ) {
           this.log()
           this.log(e.codeMessage)
-          name = await CliUx.ux.prompt('Enter a new name for the identity', {
-            required: true,
-          })
+          name = await ui.inputPrompt('Enter a new name for the identity', true)
         } else {
           throw e
         }

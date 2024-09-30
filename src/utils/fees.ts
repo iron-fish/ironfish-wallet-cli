@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { Asset } from '@ironfish/rust-nodejs'
 import {
   Assert,
   CreateTransactionRequest,
@@ -14,6 +13,7 @@ import {
   RpcClient,
   RpcRequestError,
 } from '@ironfish/sdk'
+import { ux } from '@oclif/core'
 import inquirer from 'inquirer'
 import { promptCurrency } from './currency'
 
@@ -24,25 +24,29 @@ export async function selectFee(options: {
   confirmations?: number
   logger: Logger
 }): Promise<RawTransaction> {
+  ux.action.start('Calculating fees')
+
   const feeRates = await options.client.wallet.estimateFeeRates()
 
-  const [slow, average, fast] = [
-    await getTxWithFee(
+  const promises = [
+    getTxWithFee(
       options.client,
       options.transaction,
       CurrencyUtils.decode(feeRates.content.slow),
     ),
-    await getTxWithFee(
+    getTxWithFee(
       options.client,
       options.transaction,
       CurrencyUtils.decode(feeRates.content.average),
     ),
-    await getTxWithFee(
+    getTxWithFee(
       options.client,
       options.transaction,
       CurrencyUtils.decode(feeRates.content.fast),
     ),
   ]
+
+  const [slow, average, fast] = await Promise.all(promises)
 
   const choices = [
     getChoiceFromTx('Slow', slow),
@@ -53,6 +57,8 @@ export async function selectFee(options: {
       value: null,
     },
   ]
+
+  ux.action.stop()
 
   const result = await inquirer.prompt<{
     selection: RawTransaction | null
@@ -71,7 +77,6 @@ export async function selectFee(options: {
       required: true,
       text: 'Enter the fee amount in $IRON',
       logger: options.logger,
-      assetId: Asset.nativeId().toString('hex'),
       balance: {
         account: options.account,
         confirmations: options.confirmations,
@@ -104,7 +109,7 @@ async function getTxWithFee(
   const response = await promise.catch((e) => {
     if (
       e instanceof RpcRequestError &&
-      e.code === RPC_ERROR_CODES.INSUFFICIENT_BALANCE
+      e.code === RPC_ERROR_CODES.INSUFFICIENT_BALANCE.valueOf()
     ) {
       return null
     } else {

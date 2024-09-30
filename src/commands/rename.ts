@@ -1,27 +1,24 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+import { Args } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { checkWalletUnlocked } from '../ui'
 
 export class RenameCommand extends IronfishCommand {
-  static description = 'Change the name of an account'
+  static description = 'rename the name of an account'
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+  static args = {
+    old_name: Args.string({
       required: true,
-      description: 'Name of the account to rename',
-    },
-    {
-      name: 'new-name',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+      description: 'Old account to rename',
+    }),
+    new_name: Args.string({
       required: true,
-      description: 'New name to assign to the account',
-    },
-  ]
+      description: 'New name for the account',
+    }),
+  }
 
   static flags = {
     ...RemoteFlags,
@@ -29,13 +26,14 @@ export class RenameCommand extends IronfishCommand {
 
   async start(): Promise<void> {
     const { args } = await this.parse(RenameCommand)
-    const account = args.account as string
-    const newName = args['new-name'] as string
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
+
+    await client.wallet.renameAccount({
+      account: args.old_name,
+      newName: args.new_name,
     })
-    await client.wallet.renameAccount({ account, newName })
-    this.log(`Account ${account} renamed to ${newName}`)
+    this.log(`Account ${args.old_name} renamed to ${args.new_name}`)
   }
 }

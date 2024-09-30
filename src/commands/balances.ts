@@ -7,10 +7,15 @@ import {
   GetBalancesResponse,
   RpcAsset,
 } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { compareAssets, renderAssetWithVerificationStatus } from '../utils'
+import { checkWalletUnlocked, table, TableColumns, TableFlags } from '../ui'
+import {
+  compareAssets,
+  renderAssetWithVerificationStatus,
+  useAccount,
+} from '../utils'
 
 type AssetBalancePairs = {
   asset: RpcAsset
@@ -18,34 +23,31 @@ type AssetBalancePairs = {
 }
 
 export class BalancesCommand extends IronfishCommand {
-  static description = `Display the account's balances for all assets`
+  static description = `show the account's balance for all assets`
 
   static flags = {
     ...RemoteFlags,
-    ...CliUx.ux.table.flags(),
+    ...TableFlags,
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to get balances for',
+    }),
     all: Flags.boolean({
       default: false,
       description: `Also show unconfirmed balance, head hash, and head sequence`,
     }),
     confirmations: Flags.integer({
-      required: false,
       description: 'Minimum number of blocks confirmations for a transaction',
     }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      required: false,
-      description: 'Name of the account to get balances for',
-    },
-  ]
-
   async start(): Promise<void> {
-    const { flags, args } = await this.parse(BalancesCommand)
-    const client = await this.sdk.connectRpc()
+    const { flags } = await this.parse(BalancesCommand)
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
 
-    const account = args.account as string | undefined
+    const account = await useAccount(client, flags.account)
+
     const response = await client.wallet.getAccountBalances({
       account,
       confirmations: flags.confirmations,
@@ -67,9 +69,9 @@ export class BalancesCommand extends IronfishCommand {
       })
     }
 
-    let columns: CliUx.Table.table.Columns<AssetBalancePairs> = {
+    let columns: TableColumns<AssetBalancePairs> = {
       assetName: {
-        header: 'Asset Name',
+        header: 'Asset',
         get: ({ asset }) =>
           renderAssetWithVerificationStatus(
             BufferUtils.toHuman(Buffer.from(asset.name, 'hex')),
@@ -79,12 +81,8 @@ export class BalancesCommand extends IronfishCommand {
             },
           ),
       },
-      'asset.id': {
-        header: 'Asset Id',
-        get: ({ asset }) => asset.id,
-      },
       available: {
-        header: 'Available Balance',
+        header: 'Balance',
         get: ({ asset, balance }) =>
           CurrencyUtils.render(
             balance.available,
@@ -99,7 +97,7 @@ export class BalancesCommand extends IronfishCommand {
       columns = {
         ...columns,
         confirmed: {
-          header: 'Confirmed Balance',
+          header: 'Confirmed',
           get: ({ asset, balance }) =>
             CurrencyUtils.render(
               balance.confirmed,
@@ -109,7 +107,7 @@ export class BalancesCommand extends IronfishCommand {
             ),
         },
         unconfirmed: {
-          header: 'Unconfirmed Balance',
+          header: 'Unconfirmed',
           get: ({ asset, balance }) =>
             CurrencyUtils.render(
               balance.unconfirmed,
@@ -119,7 +117,7 @@ export class BalancesCommand extends IronfishCommand {
             ),
         },
         pending: {
-          header: 'Pending Balance',
+          header: 'Pending',
           get: ({ asset, balance }) =>
             CurrencyUtils.render(
               balance.pending,
@@ -128,13 +126,13 @@ export class BalancesCommand extends IronfishCommand {
               asset.verification,
             ),
         },
-        blockHash: {
-          header: 'Head Hash',
-          get: ({ balance }) => balance.blockHash || 'NULL',
+        availableNotes: {
+          header: 'Notes',
+          get: ({ balance }) => balance.availableNoteCount,
         },
-        sequence: {
-          header: 'Head Sequence',
-          get: ({ balance }) => balance.sequence || 'NULL',
+        'asset.id': {
+          header: 'Asset Id',
+          get: ({ asset }) => asset.id,
         },
       }
     }
@@ -148,6 +146,6 @@ export class BalancesCommand extends IronfishCommand {
       ),
     )
 
-    CliUx.ux.table(assetBalancePairs, columns, flags)
+    table(assetBalancePairs, columns, { ...flags })
   }
 }

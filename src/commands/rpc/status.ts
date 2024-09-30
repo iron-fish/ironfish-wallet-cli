@@ -5,14 +5,16 @@ import { FileUtils, GetRpcStatusResponse, PromiseUtils } from '@ironfish/sdk'
 import { Flags } from '@oclif/core'
 import blessed from 'blessed'
 import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcWallet } from '../../utils/clients'
+import { JsonFlags, RemoteFlags } from '../../flags'
+import * as ui from '../../ui'
 
 export default class Status extends IronfishCommand {
-  static description = 'Show the status of the RPC layer'
+  static description = "show RPC server's status"
+  static enableJsonFlag = true
 
   static flags = {
     ...RemoteFlags,
+    ...JsonFlags,
     follow: Flags.boolean({
       char: 'f',
       default: false,
@@ -20,14 +22,15 @@ export default class Status extends IronfishCommand {
     }),
   }
 
-  async start(): Promise<void> {
+  async start(): Promise<unknown> {
     const { flags } = await this.parse(Status)
 
     if (!flags.follow) {
-      const client = await connectRpcWallet(this.sdk, this.walletConfig)
+      const client = await this.connectRpcWallet()
       const response = await client.rpc.getRpcStatus()
       this.log(renderStatus(response.content))
-      this.exit(0)
+
+      return response.content
     }
 
     // Console log will create display issues with Blessed
@@ -63,24 +66,18 @@ function renderStatus(content: GetRpcStatusResponse): string {
 
   for (const adapter of content.adapters) {
     result += `\n\n[${adapter.name}]\n`
-    result += `Clients:          ${adapter.clients}\n`
-    result += `Requests Pending: ${adapter.pending.length}\n`
-    result += `Routes Pending:   ${adapter.pending.join(', ')}\n`
-    result += `Inbound Traffic:  ${FileUtils.formatMemorySize(
-      adapter.inbound,
-    )}/s\n`
-    result += `Outbound Traffic: ${FileUtils.formatMemorySize(
-      adapter.outbound,
-    )}/s\n`
-    result += `Outbound Total:   ${FileUtils.formatMemorySize(
-      adapter.writtenBytes,
-    )}\n`
-    result += `Inbound Total:    ${FileUtils.formatMemorySize(
-      adapter.readBytes,
-    )}\n`
-    result += `RW Backlog:       ${FileUtils.formatMemorySize(
-      adapter.readableBytes,
-    )} / ${FileUtils.formatMemorySize(adapter.writableBytes)}`
+    result += ui.card({
+      Clients: adapter.clients,
+      'Requests Pending': adapter.pending.length,
+      'Routes Pending': adapter.pending.join(', '),
+      'Inbound Traffic': FileUtils.formatMemorySize(adapter.inbound),
+      'Outbound Traffic': FileUtils.formatMemorySize(adapter.outbound),
+      'Outbound Total': FileUtils.formatMemorySize(adapter.writtenBytes),
+      'Inbound Total': FileUtils.formatMemorySize(adapter.readBytes),
+      'RW Backlog': `${FileUtils.formatMemorySize(
+        adapter.readableBytes,
+      )} / ${FileUtils.formatMemorySize(adapter.writableBytes)}`,
+    })
   }
 
   return result

@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CurrencyUtils, Transaction } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
-import { longPrompt } from '../../../utils/longPrompt'
+import * as ui from '../../../ui'
 import { MultisigTransactionJson } from '../../../utils/multisig'
 import { watchTransaction } from '../../../utils/transaction'
 
@@ -16,9 +16,9 @@ export class MultisigSign extends IronfishCommand {
   static flags = {
     ...RemoteFlags,
     account: Flags.string({
-      char: 'f',
-      description: 'Account to use when aggregating signature shares',
-      required: false,
+      char: 'a',
+      description:
+        'Name of the account to use when aggregating signature shares',
     }),
     signingPackage: Flags.string({
       char: 'p',
@@ -52,16 +52,19 @@ export class MultisigSign extends IronfishCommand {
     )
     const options = MultisigTransactionJson.resolveFlags(flags, loaded)
 
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
     let signingPackage = options.signingPackage
     if (!signingPackage) {
-      signingPackage = await longPrompt('Enter the signing package', {
+      signingPackage = await ui.longPrompt('Enter the signing package', {
         required: true,
       })
     }
 
     let signatureShares = options.signatureShare
     if (!signatureShares) {
-      const input = await longPrompt(
+      const input = await ui.longPrompt(
         'Enter the signature shares, separated by commas',
         {
           required: true,
@@ -71,9 +74,7 @@ export class MultisigSign extends IronfishCommand {
     }
     signatureShares = signatureShares.map((s) => s.trim())
 
-    CliUx.ux.action.start('Signing the multisig transaction')
-
-    const client = await this.sdk.connectRpc()
+    ux.action.start('Signing the multisig transaction')
 
     const response = await client.wallet.multisig.aggregateSignatureShares({
       account: flags.account,
@@ -85,7 +86,7 @@ export class MultisigSign extends IronfishCommand {
     const bytes = Buffer.from(response.content.transaction, 'hex')
     const transaction = new Transaction(bytes)
 
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
     if (flags.broadcast && response.content.accepted === false) {
       this.warn(

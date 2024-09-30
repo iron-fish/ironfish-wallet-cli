@@ -10,21 +10,28 @@ import {
   RpcAsset,
   TransactionType,
 } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { getAssetsByIDs } from '../utils'
+import { checkWalletUnlocked, table, TableColumns, TableFlags } from '../ui'
+import { getAssetsByIDs, useAccount } from '../utils'
+import { extractChainportDataFromTransaction } from '../utils/chainport'
 import { Format, TableCols } from '../utils/table'
 
-const { sort: _, ...tableFlags } = CliUx.ux.table.flags()
+const { sort: _, ...tableFlags } = TableFlags
 export class TransactionsCommand extends IronfishCommand {
-  static description = `Display the account transactions`
+  static description = `list the account's transactions`
 
   static flags = {
     ...RemoteFlags,
     ...tableFlags,
-    hash: Flags.string({
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to get transactions for',
+    }),
+    transaction: Flags.string({
       char: 't',
+      aliases: ['hash'],
       description: 'Transaction hash to get details for',
     }),
     sequence: Flags.integer({
@@ -47,31 +54,27 @@ export class TransactionsCommand extends IronfishCommand {
     }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      required: false,
-      description: 'Name of the account',
-    },
-  ]
-
   async start(): Promise<void> {
-    const { flags, args } = await this.parse(TransactionsCommand)
-    const account = args.account as string | undefined
+    const { flags } = await this.parse(TransactionsCommand)
 
     const format: Format =
       flags.csv || flags.output === 'csv'
         ? Format.csv
         : flags.output === 'json'
         ? Format.json
-        : flags.output === 'yaml'
-        ? Format.yaml
         : Format.cli
 
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    await checkWalletUnlocked(client)
+
+    const account = await useAccount(client, flags.account)
+
+    const networkId = (await client.wallet.getNodeStatus()).content.node
+      .networkId
+
     const response = client.wallet.getAccountTransactionsStream({
       account,
-      hash: flags.hash,
+      hash: flags.transaction,
       sequence: flags.sequence,
       limit: flags.limit,
       offset: flags.offset,
@@ -94,6 +97,14 @@ export class TransactionsCommand extends IronfishCommand {
           account,
           flags.confirmations,
         )
+
+        if (extractChainportDataFromTransaction(networkId, transaction)) {
+          transaction.type =
+            transaction.type === TransactionType.SEND
+              ? ('Bridge (outgoing)' as TransactionType)
+              : ('Bridge (incoming)' as TransactionType)
+        }
+
         transactionRows = this.getTransactionRowsByNote(
           assetLookup,
           transaction,
@@ -113,7 +124,7 @@ export class TransactionsCommand extends IronfishCommand {
         )
       }
 
-      CliUx.ux.table(transactionRows, columns, {
+      table(transactionRows, columns, {
         printLine: this.log.bind(this),
         ...flags,
         'no-header': !showHeader,
@@ -257,48 +268,57 @@ export class TransactionsCommand extends IronfishCommand {
     extended: boolean,
     notes: boolean,
     format: Format,
-  ): CliUx.Table.table.Columns<PartialRecursive<TransactionRow>> {
-    let columns: CliUx.Table.table.Columns<PartialRecursive<TransactionRow>> = {
+  ): TableColumns<PartialRecursive<TransactionRow>> {
+    let columns: TableColumns<PartialRecursive<TransactionRow>> = {
       timestamp: TableCols.timestamp({
         streaming: true,
       }),
       status: {
         header: 'Status',
         minWidth: 12,
+        get: (row) => row.status ?? '',
       },
       type: {
         header: 'Type',
-        minWidth: 8,
+        minWidth: notes ? 18 : 8,
+        get: (row) => row.type ?? '',
       },
       hash: {
         header: 'Hash',
         minWidth: 32,
+        get: (row) => row.hash ?? '',
       },
       notesCount: {
         header: 'Notes',
         minWidth: 5,
         extended: true,
+        get: (row) => row.notesCount ?? '',
       },
       spendsCount: {
         header: 'Spends',
         minWidth: 5,
         extended: true,
+        get: (row) => row.spendsCount ?? '',
       },
       mintsCount: {
         header: 'Mints',
         minWidth: 5,
         extended: true,
+        get: (row) => row.mintsCount ?? '',
       },
       burnsCount: {
         header: 'Burns',
         minWidth: 5,
         extended: true,
+        get: (row) => row.burnsCount ?? '',
       },
       expiration: {
         header: 'Expiration',
+        get: (row) => row.expiration ?? '',
       },
       submittedSequence: {
         header: 'Submitted Sequence',
+        get: (row) => row.submittedSequence ?? '',
       },
       feePaid: {
         header: 'Fee Paid ($IRON)',
@@ -326,12 +346,15 @@ export class TransactionsCommand extends IronfishCommand {
         ...columns,
         sender: {
           header: 'Sender Address',
+          get: (row) => row.sender ?? '',
         },
         recipient: {
           header: 'Recipient Address',
+          get: (row) => row.recipient ?? '',
         },
         memo: {
           header: 'Memo',
+          get: (row) => row.memo ?? '',
         },
       }
     }
@@ -341,6 +364,7 @@ export class TransactionsCommand extends IronfishCommand {
         group: {
           header: '',
           minWidth: 3,
+          get: (row) => row.group ?? '',
         },
         ...columns,
       }
@@ -388,4 +412,5 @@ type TransactionRow = {
   submittedSequence: number
   sender: string
   recipient: string
+  memo?: string
 }

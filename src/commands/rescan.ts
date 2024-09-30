@@ -2,20 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { Meter, TimeUtils } from '@ironfish/sdk'
-import { CliUx, Flags } from '@oclif/core'
+import { setLogLevelFromConfig } from '@ironfish/sdk'
+import { Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { RemoteFlags, WalletRemoteFlags } from '../flags'
-import { ProgressBar } from '../types'
+import { RemoteFlags } from '../flags'
+import { checkWalletUnlocked, ProgressBar, ProgressBarPresets } from '../ui'
 import { hasUserResponseError } from '../utils'
-import { connectRpcWallet } from '../utils/clients'
 
 export class RescanCommand extends IronfishCommand {
-  static description = `Rescan the blockchain for transactions. Clears wallet disk caches before rescanning.`
+  static description = `resets all accounts balance and rescans`
 
   static flags = {
     ...RemoteFlags,
-    ...WalletRemoteFlags,
     follow: Flags.boolean({
       char: 'f',
       default: true,
@@ -27,68 +25,48 @@ export class RescanCommand extends IronfishCommand {
       default: false,
       description: 'Force the rescan to not connect via RPC',
     }),
-    from: Flags.integer({
-      description: 'Sequence to start account rescan from',
-      hidden: true,
-    }),
   }
 
   async start(): Promise<void> {
     const { flags } = await this.parse(RescanCommand)
-    const { follow, local, from } = flags
+    const { follow, local } = flags
 
     if (local && !follow) {
       this.error('You cannot pass both --local and --no-follow')
     }
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      forceLocal: local,
-      connectNodeClient: true,
-    })
+    const client = await this.connectRpcWallet({ forceLocal: flags.local })
+    await checkWalletUnlocked(client)
 
-    CliUx.ux.action.start('Asking node to start scanning', undefined, {
+    ux.action.start('Asking node to start scanning', undefined, {
       stdout: true,
     })
 
-    const response = client.wallet.rescanAccountStream({ follow, from })
+    // Suppress log messages from the wallet scanner, to prevent those messages
+    // from interfering with the progress bar. This problem can occur only if
+    // not connected to a remote node (i.e. we're running with the in-memory
+    // rpc).
+    setLogLevelFromConfig('wallet:error')
 
-    const speed = new Meter()
+    const response = client.wallet.rescan({ follow })
 
-    const progress = CliUx.ux.progress({
-      format:
-        'Scanning Blocks: [{bar}] {value}/{total} {percentage}% {speed}/sec | {estimate}',
-    }) as ProgressBar
+    const progress = new ProgressBar('Scanning blocks', {
+      preset: ProgressBarPresets.withSpeed,
+    })
 
     let started = false
-    let lastSequence = 0
-
     try {
       for await (const { endSequence, sequence } of response.contentStream()) {
         if (!started) {
-          CliUx.ux.action.stop()
-          speed.start()
+          ux.action.stop()
           progress.start(endSequence, 0)
           started = true
         }
 
-        const completed = sequence - lastSequence
-        lastSequence = sequence
-
-        speed.add(completed)
-        progress.increment(completed)
-
-        progress.update({
-          estimate: TimeUtils.renderEstimate(
-            sequence,
-            endSequence,
-            speed.rate1m,
-          ),
-          speed: speed.rate1s.toFixed(0),
-        })
+        progress.update(sequence)
       }
     } catch (error) {
       progress?.stop()
-      speed.stop()
 
       if (hasUserResponseError(error)) {
         this.error(error.codeMessage)
@@ -97,7 +75,6 @@ export class RescanCommand extends IronfishCommand {
       throw error
     }
 
-    speed.stop()
     progress?.stop()
     this.log(follow ? 'Scanning Complete' : 'Scan started in background')
   }

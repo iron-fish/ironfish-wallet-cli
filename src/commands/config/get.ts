@@ -2,26 +2,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { ConfigOptions } from '@ironfish/sdk'
-import { Flags } from '@oclif/core'
-import jsonColorizer from 'json-colorizer'
+import { Args, Flags } from '@oclif/core'
 import { IronfishCommand } from '../../command'
-import { RemoteFlags } from '../../flags'
-import { connectRpcConfig } from '../../utils/clients'
+import { JsonFlags, RemoteFlags } from '../../flags'
+import * as ui from '../../ui'
 
 export class GetCommand extends IronfishCommand {
-  static description = `Print out one config value`
+  static description = `show a single config value`
+  static enableJsonFlag = true
 
-  static args = [
-    {
-      name: 'name',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+  static args = {
+    name: Args.string({
       required: true,
       description: 'Name of the config item',
-    },
-  ]
+    }),
+  }
 
   static flags = {
     ...RemoteFlags,
+    ...JsonFlags,
     user: Flags.boolean({
       description: 'Only show config from the users datadir and not overrides',
     }),
@@ -29,27 +28,13 @@ export class GetCommand extends IronfishCommand {
       default: false,
       description: 'Dont connect to the node when displaying the config',
     }),
-    color: Flags.boolean({
-      default: true,
-      allowNo: true,
-      description: 'Should colorize the output',
-    }),
-    json: Flags.boolean({
-      default: false,
-      allowNo: true,
-      description: 'Output the config value as json',
-    }),
   }
 
-  async start(): Promise<void> {
+  async start(): Promise<unknown> {
     const { args, flags } = await this.parse(GetCommand)
-    const name = (args.name as string).trim()
+    const { name } = args
 
-    const client = await connectRpcConfig(
-      this.sdk,
-      this.walletConfig,
-      flags.local,
-    )
+    const client = await this.connectRpcConfig(flags.local)
 
     const response = await client.config.getConfig({
       user: flags.user,
@@ -61,19 +46,10 @@ export class GetCommand extends IronfishCommand {
       this.exit(0)
     }
 
-    let output = ''
+    const config = { [key]: response.content[key] }
 
-    if (flags.json) {
-      output = JSON.stringify(response.content[key], undefined, '   ')
+    this.log(ui.card(config))
 
-      if (flags.color) {
-        output = jsonColorizer(output)
-      }
-    } else {
-      output = String(response.content[key])
-    }
-
-    this.log(output)
-    this.exit(0)
+    return config
   }
 }

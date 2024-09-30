@@ -2,22 +2,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { CliUx, Flags } from '@oclif/core'
+import { Args, Flags, ux } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import * as ui from '../ui'
 
 export class DeleteCommand extends IronfishCommand {
-  static description = `Permanently delete an account`
+  static description = `delete an account`
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+  static args = {
+    account: Args.string({
       required: true,
       description: 'Name of the account',
-    },
-  ]
+    }),
+  }
 
   static flags = {
     ...RemoteFlags,
@@ -32,35 +30,30 @@ export class DeleteCommand extends IronfishCommand {
 
   async start(): Promise<void> {
     const { args, flags } = await this.parse(DeleteCommand)
-    const confirm = flags.confirm
-    const wait = flags.wait
-    const account = args.account as string
+    const { confirm, wait } = flags
+    const { account } = args
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
 
-    CliUx.ux.action.start(`Deleting account '${account}'`)
+    ux.action.start(`Deleting account '${account}'`)
     const response = await client.wallet.removeAccount({
       account,
       confirm,
       wait,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
     if (response.content.needsConfirm) {
-      const value = await CliUx.ux.prompt(
-        `Are you sure? Type ${account} to confirm`,
+      await ui.confirmInputOrQuit(
+        account,
+        `Are you sure you want to delete "${account}"?\nType ${account} to confirm`,
+        flags.confirm,
       )
 
-      if (value !== account) {
-        this.log(`Aborting: ${value} did not match ${account}`)
-        this.exit(1)
-      }
-
-      CliUx.ux.action.start(`Deleting account '${account}'`)
+      ux.action.start(`Deleting account '${account}'`)
       await client.wallet.removeAccount({ account, confirm: true, wait })
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
     this.log(`Account '${account}' successfully deleted.`)

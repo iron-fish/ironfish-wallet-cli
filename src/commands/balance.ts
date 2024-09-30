@@ -10,18 +10,34 @@ import {
 import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../command'
 import { RemoteFlags } from '../flags'
-import { renderAssetWithVerificationStatus } from '../utils'
-import { connectRpcWallet } from '../utils/clients'
+import * as ui from '../ui'
+import { renderAssetWithVerificationStatus, useAccount } from '../utils'
 
 export class BalanceCommand extends IronfishCommand {
-  static description =
-    'Display the account balance\n\
-  What is the difference between available to spend balance, and balance?\n\
-  Available to spend balance is your coins from transactions that have been mined on blocks on your main chain.\n\
-  Balance is your coins from all of your transactions, even if they are on forks or not yet included as part of a mined block.'
+  static description = `show the account's balance for an asset
+
+What is the difference between available to spend balance, and balance?\n\
+Available to spend balance is your coins from transactions that have been mined on blocks on your main chain.\n\
+Balance is your coins from all of your transactions, even if they are on forks or not yet included as part of a mined block.`
+
+  static examples = [
+    {
+      description: 'show the balance for $IRON asset',
+      command: 'ironfishw balance',
+    },
+    {
+      description: 'show the balance for $IRON asset',
+      command:
+        'ironfishw balance --assetId 51f33a2f14f92735e562dc658a5639279ddca3d5079a6d1242b2a588a9cbf44c',
+    },
+  ]
 
   static flags = {
     ...RemoteFlags,
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to get balance for',
+    }),
     explain: Flags.boolean({
       default: false,
       description: 'Explain your balance',
@@ -31,31 +47,20 @@ export class BalanceCommand extends IronfishCommand {
       description: 'Also show unconfirmed balance',
     }),
     confirmations: Flags.integer({
-      required: false,
       description: 'Minimum number of blocks confirmations for a transaction',
     }),
     assetId: Flags.string({
-      required: false,
       description: 'Asset identifier to check the balance for',
     }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
-      required: false,
-      description: 'Name of the account to get balance for',
-    },
-  ]
-
   async start(): Promise<void> {
-    const { flags, args } = await this.parse(BalanceCommand)
-    const account = args.account as string | undefined
+    const { flags } = await this.parse(BalanceCommand)
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
+    const account = await useAccount(client, flags.account)
 
     const response = await client.wallet.getAccountBalance({
       account,
@@ -68,7 +73,7 @@ export class BalanceCommand extends IronfishCommand {
     const asset = (
       await client.wallet.getAsset({
         account,
-        id: response.content.assetId,
+        id: assetId,
         confirmations: flags.confirmations,
       })
     ).content
@@ -107,18 +112,24 @@ export class BalanceCommand extends IronfishCommand {
       assetName,
     )
     if (flags.all) {
-      this.log(`Account: ${response.content.account}`)
-      this.log(`Head Hash: ${response.content.blockHash || 'NULL'}`)
-      this.log(`Head Sequence: ${response.content.sequence || 'NULL'}`)
-      this.log(`Available:   ${renderedAvailable}`)
-      this.log(`Confirmed:   ${renderedConfirmed}`)
-      this.log(`Unconfirmed: ${renderedUnconfirmed}`)
-      this.log(`Pending:     ${renderedPending}`)
+      this.log(
+        ui.card({
+          Account: response.content.account,
+          Balance: renderedAvailable,
+          Confirmed: renderedConfirmed,
+          Unconfirmed: renderedUnconfirmed,
+          Pending: renderedPending,
+        }),
+      )
       return
     }
 
-    this.log(`Account: ${response.content.account}`)
-    this.log(`Available Balance: ${renderedAvailable}`)
+    this.log(
+      ui.card({
+        Account: response.content.account,
+        Balance: renderedAvailable,
+      }),
+    )
   }
 
   explainBalance(
@@ -155,7 +166,7 @@ export class BalanceCommand extends IronfishCommand {
     this.log('')
 
     this.log(
-      `Your available balance is made of notes on the chain that are safe to spend`,
+      `Your available balance is made of ${response.availableNoteCount} notes on the chain that are safe to spend`,
     )
     this.log(`Available: ${renderedAvailable}`)
     this.log('')
@@ -179,6 +190,8 @@ export class BalanceCommand extends IronfishCommand {
   }
 }
 
+// TODO(mat): Eventually this logic should probably be rolled into
+// CurrencyUtils.render() via additional options
 function renderValue(
   amount: string | bigint,
   asset: RpcAsset,

@@ -2,33 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { IronfishCommand } from '../../command'
-import {
-  ConfigFlag,
-  ConfigFlagKey,
-  DataDirFlag,
-  DataDirFlagKey,
-} from '../../flags'
-import { walletNode } from '../../walletNode'
 
 export class RevertCommand extends IronfishCommand {
-  static description = `Revert the last run migration`
+  static description = `revert the last run migration`
 
   static hidden = true
-
-  static flags = {
-    [ConfigFlagKey]: ConfigFlag,
-    [DataDirFlagKey]: DataDirFlag,
-  }
 
   async start(): Promise<void> {
     await this.parse(RevertCommand)
 
-    const node = await walletNode({
-      sdk: this.sdk,
-      walletConfig: this.walletConfig,
-      connectNodeClient: false,
-    })
-
+    const node = await this.sdk.node()
     await node.migrator.revert()
   }
 }

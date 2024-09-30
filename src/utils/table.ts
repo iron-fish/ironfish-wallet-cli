@@ -4,7 +4,7 @@
 
 import { ASSET_NAME_LENGTH } from '@ironfish/rust-nodejs'
 import { Assert, BufferUtils, TimeUtils } from '@ironfish/sdk'
-import { table } from '@oclif/core/lib/cli-ux/styled/table'
+import { TableColumn } from '../ui'
 
 /**
  * Estimated max length of the longest TimeUtils.renderTime()
@@ -27,7 +27,7 @@ const timestamp = <T extends Record<string, unknown>>(options?: {
   field?: string
   get?: (row: Record<string, unknown>) => string
   minWidth?: number
-}): Partial<table.Column<T>> => {
+}): TableColumn<T> => {
   const header = options?.header ?? 'Timestamp'
   const field = options?.field ?? 'timestamp'
 
@@ -62,12 +62,15 @@ const timestamp = <T extends Record<string, unknown>>(options?: {
 const asset = <T extends Record<string, unknown>>(options?: {
   extended?: boolean
   format?: Format
-}): Partial<Record<string, table.Column<T>>> => {
+}): Partial<Record<string, TableColumn<T>>> => {
   if (options?.extended || options?.format !== Format.cli) {
     return {
       assetId: {
         header: 'Asset ID',
-        get: (row) => row['assetId'],
+        get: (row) => {
+          Assert.isString(row.assetId)
+          return row.assetId
+        },
         minWidth: MAX_ASSET_NAME_COLUMN_WIDTH,
         extended: options?.extended ?? false,
       },
@@ -108,9 +111,9 @@ const asset = <T extends Record<string, unknown>>(options?: {
 const fixedWidth = <T extends Record<string, unknown>>(options: {
   width: number
   get: (row: T) => string
-  header?: string
+  header: string
   extended?: boolean
-}): Partial<table.Column<T>> => {
+}): TableColumn<T> => {
   return {
     ...options,
     get: (row) => truncateCol(options.get(row), options.width),
@@ -130,7 +133,6 @@ export enum Format {
   cli = 'cli',
   csv = 'csv',
   json = 'json',
-  yaml = 'yaml',
 }
 
 export const TableCols = { timestamp, asset, fixedWidth }

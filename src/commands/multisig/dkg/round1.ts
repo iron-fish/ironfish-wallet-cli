@@ -1,11 +1,11 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-import { CliUx, Flags } from '@oclif/core'
+import { Flags } from '@oclif/core'
 import { IronfishCommand } from '../../../command'
 import { RemoteFlags } from '../../../flags'
-import { longPrompt } from '../../../utils/longPrompt'
-import { selectSecret } from '../../../utils/multisig'
+import * as ui from '../../../ui'
+import { Ledger } from '../../../utils/ledger'
 
 export class DkgRound1Command extends IronfishCommand {
   static description =
@@ -28,21 +28,27 @@ export class DkgRound1Command extends IronfishCommand {
       char: 'm',
       description: 'Minimum number of signers to meet signing threshold',
     }),
+    ledger: Flags.boolean({
+      default: false,
+      description: 'Perform operation with a ledger device',
+      hidden: true,
+    }),
   }
 
   async start(): Promise<void> {
     const { flags } = await this.parse(DkgRound1Command)
 
-    const client = await this.sdk.connectRpc()
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
 
     let participantName = flags.participantName
     if (!participantName) {
-      participantName = await selectSecret(client)
+      participantName = await ui.multisigSecretPrompt(client)
     }
 
     let identities = flags.identity
     if (!identities || identities.length < 2) {
-      const input = await longPrompt(
+      const input = await ui.longPrompt(
         'Enter the identities of all participants, separated by commas',
         {
           required: true,
@@ -58,16 +64,19 @@ export class DkgRound1Command extends IronfishCommand {
 
     let minSigners = flags.minSigners
     if (!minSigners) {
-      const input = await CliUx.ux.prompt(
+      const input = await ui.inputPrompt(
         'Enter the number of minimum signers',
-        {
-          required: true,
-        },
+        true,
       )
       minSigners = parseInt(input)
       if (isNaN(minSigners) || minSigners < 2) {
         this.error('Minimum number of signers must be at least 2')
       }
+    }
+
+    if (flags.ledger) {
+      await this.performRound1WithLedger()
+      return
     }
 
     const response = await client.wallet.multisig.dkg.round1({
@@ -86,5 +95,18 @@ export class DkgRound1Command extends IronfishCommand {
 
     this.log('Next step:')
     this.log('Send the round 1 public package to each participant')
+  }
+
+  async performRound1WithLedger(): Promise<void> {
+    const ledger = new Ledger(this.logger)
+    try {
+      await ledger.connect()
+    } catch (e) {
+      if (e instanceof Error) {
+        this.error(e.message)
+      } else {
+        throw e
+      }
+    }
   }
 }

@@ -8,27 +8,18 @@ import os from 'os'
 import path from 'path'
 import { promisify } from 'util'
 import { IronfishCommand } from '../../command'
-import {
-  ConfigFlag,
-  ConfigFlagKey,
-  DataDirFlag,
-  DataDirFlagKey,
-} from '../../flags'
 import { launchEditor } from '../../utils'
-import { connectRpcConfig } from '../../utils/clients'
 
 const mkdtempAsync = promisify(mkdtemp)
 const writeFileAsync = promisify(writeFile)
 const readFileAsync = promisify(readFile)
 
 export class EditCommand extends IronfishCommand {
-  static description = `Edit the config in your configured editor
+  static description = `interactively edit your config
 
   Set the editor in either EDITOR environment variable, or set 'editor' in your ironfishw config`
 
   static flags = {
-    [ConfigFlagKey]: ConfigFlag,
-    [DataDirFlagKey]: DataDirFlag,
     remote: Flags.boolean({
       default: false,
       description: 'Connect to the node when editing the config',
@@ -45,11 +36,7 @@ export class EditCommand extends IronfishCommand {
       this.exit(code || undefined)
     }
 
-    const client = await connectRpcConfig(
-      this.sdk,
-      this.walletConfig,
-      !flags.remote,
-    )
+    const client = await this.connectRpcConfig(!flags.remote)
     const response = await client.config.getConfig({ user: true })
     const output = JSON.stringify(response.content, undefined, '   ')
 

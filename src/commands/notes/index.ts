@@ -2,39 +2,35 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 import { CurrencyUtils, RpcAsset } from '@ironfish/sdk'
-import { CliUx } from '@oclif/core'
-import { IronfishCommand } from '../command'
-import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
-import { TableCols } from '../utils/table'
+import { Flags } from '@oclif/core'
+import { IronfishCommand } from '../../command'
+import { RemoteFlags } from '../../flags'
+import * as ui from '../../ui'
+import { useAccount } from '../../utils'
+import { TableCols } from '../../utils/table'
 
-const { sort: _, ...tableFlags } = CliUx.ux.table.flags()
+const { sort: _, ...tableFlags } = ui.TableFlags
 export class NotesCommand extends IronfishCommand {
-  static description = `Display the account notes`
+  static description = `list the account's notes`
 
   static flags = {
     ...RemoteFlags,
     ...tableFlags,
+    account: Flags.string({
+      char: 'a',
+      description: 'Name of the account to get notes for',
+    }),
   }
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
-      required: false,
-      description: 'Name of the account to get notes for',
-    },
-  ]
-
   async start(): Promise<void> {
-    const { flags, args } = await this.parse(NotesCommand)
-    const account = args.account as string | undefined
+    const { flags } = await this.parse(NotesCommand)
 
     const assetLookup: Map<string, RpcAsset> = new Map()
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
+
+    const account = await useAccount(client, flags.account)
 
     const response = client.wallet.getAccountNotesStream({ account })
 
@@ -48,19 +44,22 @@ export class NotesCommand extends IronfishCommand {
         )
       }
 
-      CliUx.ux.table(
+      ui.table(
         [note],
         {
           memo: {
             header: 'Memo',
             // Maximum memo length is 32 bytes
             minWidth: 33,
+            get: (row) => row.memo,
           },
           sender: {
             header: 'Sender',
+            get: (row) => row.sender,
           },
           transactionHash: {
             header: 'From Transaction',
+            get: (row) => row.transactionHash,
           },
           isSpent: {
             header: 'Spent',
@@ -86,6 +85,7 @@ export class NotesCommand extends IronfishCommand {
           },
           noteHash: {
             header: 'Note Hash',
+            get: (row) => row.noteHash,
           },
           nullifier: {
             header: 'Nullifier',

@@ -1,46 +1,47 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+import { Args } from '@oclif/core'
 import { IronfishCommand } from '../command'
-import { RemoteFlags } from '../flags'
-import { connectRpcWallet } from '../utils/clients'
+import { JsonFlags, RemoteFlags } from '../flags'
+import * as ui from '../ui'
 
 export class AddressCommand extends IronfishCommand {
-  static description = `Display your account address
+  static description = `show the account's public address
 
   The address for an account is the accounts public key, see more here: https://ironfish.network/docs/whitepaper/5_account`
 
-  static flags = {
-    ...RemoteFlags,
-  }
+  static enableJsonFlag = true
 
-  static args = [
-    {
-      name: 'account',
-      parse: (input: string): Promise<string> => Promise.resolve(input.trim()),
+  static args = {
+    account: Args.string({
       required: false,
       description: 'Name of the account to get the address for',
-    },
-  ]
+    }),
+  }
 
-  async start(): Promise<void> {
+  static flags = {
+    ...RemoteFlags,
+    ...JsonFlags,
+  }
+
+  async start(): Promise<unknown> {
     const { args } = await this.parse(AddressCommand)
-    const account = args.account as string | undefined
 
-    const client = await connectRpcWallet(this.sdk, this.walletConfig, {
-      connectNodeClient: false,
-    })
+    const client = await this.connectRpcWallet()
+    await ui.checkWalletUnlocked(client)
 
     const response = await client.wallet.getAccountPublicKey({
-      account: account,
+      account: args.account,
     })
 
-    if (!response) {
-      this.error(`An error occurred while fetching the public key.`)
-    }
-
     this.log(
-      `Account: ${response.content.account}, public key: ${response.content.publicKey}`,
+      ui.card({
+        Account: response.content.account,
+        Address: response.content.publicKey,
+      }),
     )
+
+    return response.content
   }
 }
